@@ -7,6 +7,7 @@ import com.google.gson.reflect.TypeToken;
 import communication.channel.Channel;
 import communication.messages.AuditRequest;
 import communication.messages.CheckAccountRequest;
+import communication.messages.OpenAccountRequest;
 import communication.messages.Transfer;
 
 import java.security.PublicKey;
@@ -51,5 +52,11 @@ public class ClientSide {
         var gson = new Gson();
         var responseJson = getChannel().receiveMessage().get("response");
         return gson.fromJson(responseJson, new TypeToken<ArrayList<Transfer>>(){}.getType());
+    }
+
+    void openAccount(PublicKey publicKey) throws Exception {
+        var request = new OpenAccountRequest(publicKey);
+        var requestJson = makeRequest("openAccount", request);
+        getChannel().sendMessage(requestJson);
     }
 }

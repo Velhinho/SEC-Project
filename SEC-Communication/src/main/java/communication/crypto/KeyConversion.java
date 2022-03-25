@@ -1,4 +1,4 @@
-package securemessages.crypto;
+package communication.crypto;
 
 import java.security.KeyFactory;
 import java.security.PublicKey;

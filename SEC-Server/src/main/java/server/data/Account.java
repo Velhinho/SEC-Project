@@ -1,18 +1,23 @@
-package communication.messages;
+package server.data;
 
-import java.security.PublicKey;
+import communication.messages.PendingTransfer;
+import communication.messages.Transfer;
+
+import java.util.ArrayList;
 import java.util.Objects;
 
 public final class Account {
-    private final PublicKey key;
+    private final String key;
     private final int balance;
+    private ArrayList<Transfer> transfers;
+    private ArrayList<PendingTransfer> pendingTransfers;
 
-    public Account(PublicKey key) {
+    public Account(String key) {
         this.key = key;
         this.balance = 10;
     }
 
-    public PublicKey key() {
+    public String key() {
         return key;
     }
 

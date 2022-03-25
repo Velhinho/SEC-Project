@@ -7,6 +7,8 @@ import communication.channel.Channel;
 import communication.channel.ChannelException;
 import communication.messages.AuditRequest;
 import communication.messages.CheckAccountRequest;
+import communication.messages.OpenAccountRequest;
+import server.data.ServerData;
 
 import java.util.List;
 import java.util.Objects;
@@ -14,12 +16,16 @@ import java.util.Objects;
 public class ServerSide {
     private final Channel channel;
 
+
+    private ServerData serverData;
+
     public Channel getChannel() {
         return channel;
     }
 
     public ServerSide(Channel channel) {
         this.channel = channel;
+        this.serverData = new ServerData();
     }
 
     /*
@@ -59,8 +65,19 @@ public class ServerSide {
             var responseJson = makeResponse(response);
             getChannel().sendMessage(responseJson);
 
-        } else {
+        } else if(Objects.equals(requestType, "openAccount")) {
+            var request = gson.fromJson(requestJson.get("request"), OpenAccountRequest.class);
+            System.out.println("openAccount: " + request);
+            openAccount(request.getPublicKey());
+            System.out.println(serverData.getNumberOfAccounts());
+        }
+        else {
             throw new RuntimeException("invalid json message type");
         }
     }
+
+    private void openAccount(String publicKey){
+        serverData.openAccount(publicKey);
+    }
+
 }

@@ -3,21 +3,21 @@ package communication.messages;
 import java.util.Objects;
 
 public final class Transfer {
-    private final Account sender;
-    private final Account receiver;
+    private final String  sender;
+    private final String receiver;
     private final int amount;
 
-    public Transfer(Account sender, Account receiver, int amount) {
+    public Transfer(String sender, String receiver, int amount) {
         this.sender = sender;
         this.receiver = receiver;
         this.amount = amount;
     }
 
-    public Account sender() {
+    public String sender() {
         return sender;
     }
 
-    public Account receiver() {
+    public String receiver() {
         return receiver;
     }
 

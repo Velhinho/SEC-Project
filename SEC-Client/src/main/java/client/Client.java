@@ -13,8 +13,7 @@ public class Client {
             var channel = new PlainChannel(socket);
             var clientSide = new ClientSide(channel);
             var clientKeyPair = RSAKeyGenerator.generateKeyPair();
-            var response = clientSide.checkAccount(clientKeyPair.getPublic());
-            System.out.println(response);
+            clientSide.openAccount(clientKeyPair.getPublic());
         } catch (Exception e) {
             e.printStackTrace(System.err);
         }
