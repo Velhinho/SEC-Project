@@ -40,7 +40,7 @@
                 <configuration>
                     <mainClass>client.Client</mainClass>
                     <arguments>
-                        <argument>argument1</argument>
+                        <argument>fixolas</argument>
                     </arguments>
                 </configuration>
             </plugin>

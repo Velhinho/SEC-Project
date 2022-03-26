@@ -1,9 +1,13 @@
 package client;
 
 import communication.channel.PlainChannel;
-import communication.crypto.RSAKeyGenerator;
 
+import java.io.InputStream;
 import java.net.Socket;
+import java.security.KeyPair;
+import java.security.KeyStore;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 
 public class Client {
     public static void main(String[] args) {
@@ -12,7 +16,13 @@ public class Client {
         try(var socket = new Socket("localhost", 8080)) {
             var channel = new PlainChannel(socket);
             var clientSide = new ClientSide(channel);
-            var clientKeyPair = RSAKeyGenerator.generateKeyPair();
+            KeyStore ks = KeyStore.getInstance("JKS");
+            ClassLoader classloader = Thread.currentThread().getContextClassLoader();
+            InputStream is = classloader.getResourceAsStream("clientKeys.jks");
+            ks.load(is, args[0].toCharArray());
+            PrivateKey clientPrivateKey = (PrivateKey) ks.getKey("mykey", args[0].toCharArray());
+            PublicKey clientPublicKey = ks.getCertificate("mykey").getPublicKey();
+            var clientKeyPair = new KeyPair(clientPublicKey, clientPrivateKey);
             clientSide.openAccount(clientKeyPair.getPublic());
         } catch (Exception e) {
             e.printStackTrace(System.err);
