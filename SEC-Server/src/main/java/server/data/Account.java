@@ -8,13 +8,17 @@ import java.util.Objects;
 
 public final class Account {
     private final String key;
-    private final int balance;
+    private final int account_id;
+    private int balance;
     private ArrayList<Transfer> transfers;
     private ArrayList<PendingTransfer> pendingTransfers;
 
-    public Account(String key) {
+    public Account(String key, int account_id, int balance) {
         this.key = key;
-        this.balance = 10;
+        this.account_id = account_id;
+        this.balance = balance;
+        this.transfers = new ArrayList<>();
+        this.pendingTransfers = new ArrayList<>();
     }
 
     public String key() {
@@ -41,9 +45,60 @@ public final class Account {
 
     @Override
     public String toString() {
-        return "Account[" +
-                "key=" + key + ", " +
-                "balance=" + balance + ']';
+        return "Account{" +
+                "key='" + key + '\'' +
+                ", account_id=" + account_id +
+                ", balance=" + balance +
+                ", transfers=" + transfers +
+                ", pendingTransfers=" + pendingTransfers +
+                '}';
     }
 
+    public void addTransfer(Transfer transfer) {transfers.add(transfer);}
+
+    public void addPendingTransfer(Transfer transfer){
+        pendingTransfers.add(new PendingTransfer(transfer));
+    }
+
+    public void changingBalance(int change){
+        this.balance += change;
+    }
+
+    public ArrayList<Transfer> getTransfers() {
+        return transfers;
+    }
+
+    public ArrayList<PendingTransfer> getPendingTransfers() {
+        return pendingTransfers;
+    }
+
+    public void acceptPendingTransferAsSender(String receiver){
+        PendingTransfer senderAcceptedTransfer = null;
+        for (communication.messages.PendingTransfer senderPendingTransfer : pendingTransfers) {
+            if (senderPendingTransfer.sender().equals(key) && senderPendingTransfer.receiver().equals(receiver)) {
+                senderAcceptedTransfer = senderPendingTransfer;
+                break;
+            }
+        }
+        if (senderAcceptedTransfer != null){
+            changingBalance(-senderAcceptedTransfer.amount());
+            transfers.add(senderAcceptedTransfer.transfer());
+            pendingTransfers.remove(senderAcceptedTransfer);
+        }
+    }
+
+    public void acceptPendingTransferAsReceiver(String sender){
+        PendingTransfer receiverAcceptedTransfer = null;
+        for (communication.messages.PendingTransfer receiverPendingTransfer : pendingTransfers) {
+            if (receiverPendingTransfer.sender().equals(sender) && receiverPendingTransfer.receiver().equals(key)) {
+                receiverAcceptedTransfer = receiverPendingTransfer;
+                break;
+            }
+        }
+        if (receiverAcceptedTransfer != null){
+            changingBalance(receiverAcceptedTransfer.amount());
+            transfers.add(receiverAcceptedTransfer.transfer());
+            pendingTransfers.remove(receiverAcceptedTransfer);
+        }
+    }
 }

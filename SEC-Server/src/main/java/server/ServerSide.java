@@ -5,10 +5,9 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import communication.channel.Channel;
 import communication.channel.ChannelException;
-import communication.messages.AuditRequest;
-import communication.messages.CheckAccountRequest;
-import communication.messages.OpenAccountRequest;
-import server.data.ServerData;
+import communication.messages.*;
+//import server.data.ServerData;
+import server.data.ServerDataDB;
 
 import java.util.List;
 import java.util.Objects;
@@ -16,8 +15,7 @@ import java.util.Objects;
 public class ServerSide {
     private final Channel channel;
 
-
-    private ServerData serverData;
+    private static ServerDataDB serverData = new ServerDataDB();
 
     public Channel getChannel() {
         return channel;
@@ -25,16 +23,9 @@ public class ServerSide {
 
     public ServerSide(Channel channel) {
         this.channel = channel;
-        this.serverData = new ServerData();
     }
 
-    /*
-    *
-    * {"func_call": "check_account", ...}
-    *
-    *
-    * {"request": {"func_call": "check_account", ...}, "signature": asdadsd}
-    * */
+
 
     private JsonObject makeResponse(Object response) {
         var gson = new Gson();
@@ -49,7 +40,7 @@ public class ServerSide {
         var gson = new Gson();
         System.out.println("Json: " + requestJson);
 
-        if(Objects.equals(requestType, "checkAccount")) {
+        if (Objects.equals(requestType, "checkAccount")) {
             var request = gson.fromJson(requestJson.get("request"), CheckAccountRequest.class);
             System.out.println("checkAccount: " + request);
 
@@ -57,7 +48,7 @@ public class ServerSide {
             var responseJson = makeResponse(response);
             getChannel().sendMessage(responseJson);
 
-        } else if(Objects.equals(requestType, "audit")) {
+        } else if (Objects.equals(requestType, "audit")) {
             var request = gson.fromJson(requestJson.get("request"), AuditRequest.class);
             System.out.println("audit: " + request);
 
@@ -65,19 +56,52 @@ public class ServerSide {
             var responseJson = makeResponse(response);
             getChannel().sendMessage(responseJson);
 
-        } else if(Objects.equals(requestType, "openAccount")) {
+        } else if (Objects.equals(requestType, "openAccount")) {
             var request = gson.fromJson(requestJson.get("request"), OpenAccountRequest.class);
+
             System.out.println("openAccount: " + request);
+            System.out.println("\n");
             openAccount(request.getPublicKey());
-            System.out.println(serverData.getNumberOfAccounts());
+
+        } else if (Objects.equals(requestType, "sendAmount")) {
+            var request = gson.fromJson(requestJson.get("request"), SendAmountRequest.class);
+            System.out.println("SendAmount: " + request);
+            //sendAmount(request.getSender(), request.getReceiver(), request.getAmount());
+
+        } else if (Objects.equals(requestType, "receiveAmount")) {
+            var request = gson.fromJson(requestJson.get("request"), ReceiveAmountRequest.class);
+            System.out.println("receiveAmount: " + request);
+            //receiveAmount(request.getSender(), request.getReceiver());
         }
         else {
             throw new RuntimeException("invalid json message type");
         }
     }
 
+
+
     private void openAccount(String publicKey){
         serverData.openAccount(publicKey);
     }
+
+    /*
+
+    private void sendAmount(String sender, String receiver, int amount) {
+        serverData.sendAmount(sender, receiver, amount);
+    }
+
+    private void receiveAmount(String sender, String receiver){
+        serverData.receiveAmount(sender, receiver);
+    }
+
+    private String audit(String publicKey){
+        return serverData.auditAccount(publicKey).toString();
+    }
+
+    private String checkAccount(String publicKey){
+        return "Account Balance: " + serverData.checkAccountBalance(publicKey) + " \n" + serverData.checkAccountTransfers(publicKey).toString();
+    }
+
+     */
 
 }

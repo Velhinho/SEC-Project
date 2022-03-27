@@ -1,16 +1,18 @@
 package communication.messages;
 
+import communication.crypto.KeyConversion;
+
 import java.security.PublicKey;
 import java.util.Objects;
 
 public final class AuditRequest {
-    private final PublicKey key;
+    private final String key;
 
     public AuditRequest(PublicKey key) {
-        this.key = key;
+        this.key = KeyConversion.keyToString(key);
     }
 
-    public PublicKey key() {
+    public String key() {
         return key;
     }
 

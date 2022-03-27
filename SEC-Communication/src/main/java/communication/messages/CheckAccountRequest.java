@@ -1,15 +1,18 @@
 package communication.messages;
 
+import communication.crypto.KeyConversion;
+
+import java.security.PublicKey;
 import java.util.Objects;
 
 public final class CheckAccountRequest {
-    private final long key;
+    private final String key;
 
-    public CheckAccountRequest(long key) {
-        this.key = key;
+    public CheckAccountRequest(PublicKey key) {
+        this.key = KeyConversion.keyToString(key);
     }
 
-    public long key() {
+    public String key() {
         return key;
     }
 

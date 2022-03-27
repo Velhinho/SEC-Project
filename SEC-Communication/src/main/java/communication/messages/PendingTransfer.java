@@ -32,4 +32,16 @@ public final class PendingTransfer {
                 "transfer=" + transfer + ']';
     }
 
+    public String sender(){
+        return transfer.sender();
+    }
+
+    public String receiver(){
+        return transfer.receiver();
+    }
+
+    public int amount(){
+        return transfer.amount();
+    }
+
 }
