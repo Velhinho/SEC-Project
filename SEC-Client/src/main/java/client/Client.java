@@ -25,7 +25,7 @@ public class Client {
             ClassLoader classloader = Thread.currentThread().getContextClassLoader();
             InputStream is = classloader.getResourceAsStream(args[0]);
             ks.load(is, args[1].toCharArray());
-            PrivateKey clientPrivateKey = (PrivateKey) ks.getKey("mykey", args[0].toCharArray());
+            PrivateKey clientPrivateKey = (PrivateKey) ks.getKey("mykey", args[1].toCharArray());
             PublicKey clientPublicKey = ks.getCertificate("mykey").getPublicKey();
             var clientKeyPair = new KeyPair(clientPublicKey, clientPrivateKey);
         } catch (Exception e) {
