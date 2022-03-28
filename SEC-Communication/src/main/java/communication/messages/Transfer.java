@@ -1,16 +1,41 @@
 package communication.messages;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Objects;
 
 public final class Transfer {
     private final String  sender;
     private final String receiver;
     private final int amount;
+    private final Date timestamp;
 
-    public Transfer(String sender, String receiver, int amount) {
+    public Transfer(String sender, String receiver, int amount, String timestamp) {
         this.sender = sender;
         this.receiver = receiver;
         this.amount = amount;
+        this.timestamp = stringToDate(timestamp);
+    }
+
+    public static Date stringToDate(String timestamp){
+        SimpleDateFormat formatter= new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
+        Date date = null;
+        try{
+            date = formatter.parse(timestamp);
+        }catch (Exception e){
+            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+            System.exit(0);
+        }
+        return date;
+    }
+
+    public Date getTimestamp() {
+        return timestamp;
+    }
+
+    public static String DateToString(Date date){
+        SimpleDateFormat formatter= new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
+        return formatter.format(date);
     }
 
     public String sender() {
