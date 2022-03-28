@@ -15,7 +15,7 @@ import java.util.Objects;
 public class ServerSide {
     private final Channel channel;
 
-    private static ServerDataDB serverData = new ServerDataDB();
+    private static final ServerDataDB serverData = new ServerDataDB();
 
     public Channel getChannel() {
         return channel;
@@ -44,7 +44,7 @@ public class ServerSide {
             var request = gson.fromJson(requestJson.get("request"), CheckAccountRequest.class);
             System.out.println("checkAccount: " + request);
 
-            var response = List.of();
+            var response = List.of(123);
             var responseJson = makeResponse(response);
             getChannel().sendMessage(responseJson);
 
@@ -52,7 +52,7 @@ public class ServerSide {
             var request = gson.fromJson(requestJson.get("request"), AuditRequest.class);
             System.out.println("audit: " + request);
 
-            var response = List.of();
+            var response = List.of(123);
             var responseJson = makeResponse(response);
             getChannel().sendMessage(responseJson);
 
@@ -68,10 +68,18 @@ public class ServerSide {
             System.out.println("SendAmount: " + request);
             //sendAmount(request.getSender(), request.getReceiver(), request.getAmount());
 
+            var response = List.of(123);
+            var responseJson = makeResponse(response);
+            getChannel().sendMessage(responseJson);
+
         } else if (Objects.equals(requestType, "receiveAmount")) {
             var request = gson.fromJson(requestJson.get("request"), ReceiveAmountRequest.class);
             System.out.println("receiveAmount: " + request);
             //receiveAmount(request.getSender(), request.getReceiver());
+
+            var response = List.of(123);
+            var responseJson = makeResponse(response);
+            getChannel().sendMessage(responseJson);
         }
         else {
             throw new RuntimeException("invalid json message type");

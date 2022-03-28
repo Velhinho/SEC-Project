@@ -31,43 +31,43 @@ public class ClientSide {
         return requestJson;
     }
 
-    void openAccount(PublicKey publicKey) throws Exception {
+    public void openAccount(PublicKey publicKey) throws Exception {
         var request = new OpenAccountRequest(publicKey);
         var requestJson = makeRequest("openAccount", request);
         getChannel().sendMessage(requestJson);
     }
 
-    void sendAmountRequest(PublicKey sender, PublicKey reciever, int ammount) throws Exception {
-        var request = new SendAmountRequest(sender, reciever, ammount);
+    public void sendAmountRequest(PublicKey sender, PublicKey receiver, int ammount) throws Exception {
+        var request = new SendAmountRequest(sender, receiver, ammount);
         var requestJson = makeRequest("sendAmount", request);
         getChannel().sendMessage(requestJson);
     }
 
-    void checkAccount(PublicKey publicKey) throws Exception {
+    public void checkAccount(PublicKey publicKey) throws Exception {
         var request = new CheckAccountRequest(publicKey);
         var requestJson = makeRequest("checkAccount", request);
         getChannel().sendMessage(requestJson);
 
         var gson = new Gson();
         var responseJson = getChannel().receiveMessage().get("response");
-        String response =  gson.fromJson(responseJson, new TypeToken<String>(){}.getType());
+        var response =  gson.fromJson(responseJson, new TypeToken<ArrayList<Integer>>(){}.getType());
         System.out.println(response);
     }
 
-    void receiveAmountRequest(PublicKey sender, PublicKey receiver) throws Exception {
+    public void receiveAmountRequest(PublicKey sender, PublicKey receiver) throws Exception {
         var request = new ReceiveAmountRequest(sender, receiver);
         var requestJson = makeRequest("receiveAmount", request);
         getChannel().sendMessage(requestJson);
     }
 
-    void audit(PublicKey publicKey) throws Exception {
+    public void audit(PublicKey publicKey) throws Exception {
         var request = new AuditRequest(publicKey);
         var requestJson = makeRequest("audit", request);
         getChannel().sendMessage(requestJson);
 
         var gson = new Gson();
         var responseJson = getChannel().receiveMessage().get("response");
-        String response =  gson.fromJson(responseJson, new TypeToken<String>(){}.getType());
+        var response =  gson.fromJson(responseJson, new TypeToken<ArrayList<Integer>>(){}.getType());
         System.out.println(response);
     }
 }

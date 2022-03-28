@@ -1,0 +1,44 @@
+package client.commands;
+
+import client.ClientSide;
+import communication.crypto.KeyConversion;
+
+import java.util.Objects;
+
+public final class AuditCommand implements Command {
+    private final String keyString;
+
+    public AuditCommand(String keyString) {
+        this.keyString = keyString;
+    }
+
+    @Override
+    public void execCommand(ClientSide clientSide) throws Exception {
+        var key = KeyConversion.stringToKey(keyString);
+        clientSide.audit(key);
+    }
+
+    public String keyString() {
+        return keyString;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) return true;
+        if (obj == null || obj.getClass() != this.getClass()) return false;
+        var that = (AuditCommand) obj;
+        return Objects.equals(this.keyString, that.keyString);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(keyString);
+    }
+
+    @Override
+    public String toString() {
+        return "AuditCommand[" +
+                "keyString=" + keyString + ']';
+    }
+
+}

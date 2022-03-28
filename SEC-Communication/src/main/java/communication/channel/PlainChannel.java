@@ -27,9 +27,11 @@ public class PlainChannel implements Channel {
     @Override
     public void sendMessage(JsonObject jsonObject) throws ChannelException {
         try {
-            var writer = new PrintWriter(getSocket().getOutputStream());
-            writer.println(jsonObject.toString());
-            writer.flush();
+            if (jsonObject != null) {
+                var writer = new PrintWriter(getSocket().getOutputStream());
+                writer.println(jsonObject);
+                writer.flush();
+            }
         } catch (IOException exception) {
             throw new ChannelException(exception);
         }
