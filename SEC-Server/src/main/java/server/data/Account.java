@@ -9,8 +9,8 @@ import java.util.Objects;
 public final class Account {
     private final String key;
     private int balance;
-    private ArrayList<Transfer> transfers;
-    private ArrayList<PendingTransfer> pendingTransfers;
+    private ArrayList<Transfer> transfers = new ArrayList<>();
+    private ArrayList<PendingTransfer> pendingTransfers = new ArrayList<>();
 
     public Account(String key, int balance) {
         this.key = key;

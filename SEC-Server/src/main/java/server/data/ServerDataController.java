@@ -8,10 +8,9 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 
 public class ServerDataController {
@@ -165,47 +164,38 @@ public class ServerDataController {
         return account;
     }
 
-
-    /*
-
     public void receiveAmount(String sender, String receiver) {
-        var senderAccount = accounts.get(sender);
-        var receiverAccount = accounts.get(receiver);
-        senderAccount.acceptPendingTransferAsSender(receiver);
-        receiverAccount.acceptPendingTransferAsReceiver(sender);
+        Account senderAccount = getAccount(sender);
+        assert senderAccount != null;
+        Account receiverAccount = getAccount(receiver);
+        assert receiverAccount != null;
+        List<PendingTransfer> transfers =  receiverAccount.getPendingTransfers()
+                .stream()
+                .filter(d -> d.transfer().sender().equals(sender) && d.transfer().receiver().equals(receiver))
+                .collect(Collectors.toList());
+        transfers.sort(Comparator.comparing(d -> d.transfer().getTimestamp()));
+        Collections.sort(transfers, Collections.reverseOrder());
+        assert transfers.size() > 0;
+        PendingTransfer pendingTransfer = transfers.get(0);
+        receiverAccount.changingBalance(pendingTransfer.transfer().amount());
+
+        try{
+            Statement stmt = c.createStatement();
+            String sql = "UPDATE accounts set balance = " + receiverAccount.balance() + " where public_key = \"" + receiver + "\";";
+            stmt.executeUpdate(sql);
+            stmt.close();
+            stmt = c.createStatement();
+            sql = "UPDATE transfers set pending = " + 0 +
+                    " where source_key = \"" + sender +
+                    "\" and receiver_key = \"" + receiver +
+                    "\" and timestamp = \"" + Transfer.DateToString(pendingTransfer.transfer().getTimestamp()) + "\";";
+            stmt.executeUpdate(sql);
+            stmt.close();
+        }catch (Exception e){
+            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+            System.exit(0);
+        }
+
     }
 
-    public List<Transfer> auditAccount(String publicKey){
-        Account account = accounts.get(publicKey);
-        if (account == null) {
-            return new ArrayList<Transfer>();
-        }
-        else {
-            return account.getTransfers();
-        }
-    }
-
-    public List<PendingTransfer> checkAccountTransfers(String publicKey){
-        Account account = accounts.get(publicKey);
-        if (account == null) {
-            return new ArrayList<PendingTransfer>();
-        }
-        else {
-            return account.getPendingTransfers();
-        }
-    }
-
-    public int checkAccountBalance(String publicKey){
-        Account account = accounts.get(publicKey);
-        if (account == null) {
-            return 0;
-        }
-        else {
-            return account.balance();
-        }
-    }
-
-    public ConcurrentHashMap<String, Account> getAccounts() {
-        return accounts;
-    }*/
 }
