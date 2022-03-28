@@ -40,7 +40,9 @@
                 <configuration>
                     <mainClass>client.Client</mainClass>
                     <arguments>
+                        <argument>clientKeys.jks</argument>
                         <argument>fixolas</argument>
+
                     </arguments>
                 </configuration>
             </plugin>
