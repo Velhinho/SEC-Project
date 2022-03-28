@@ -3,27 +3,22 @@ package server.data;
 import communication.messages.PendingTransfer;
 import communication.messages.Transfer;
 
-import javax.swing.plaf.nimbus.State;
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.sql.DriverManager;
-import java.sql.Connection;
 
 
-public class ServerDataDB {
+public class ServerDataController {
     private Connection c = null;
-    private ConcurrentHashMap<String, Account> accounts;
 
-    public ServerDataDB(){
+    public ServerDataController(){
         connectToDatabase();
-        getAccountsFromDatabase();
-        getTransfersFromDatabase();
     }
 
     public void connectToDatabase(){
@@ -49,12 +44,12 @@ public class ServerDataDB {
             System.err.println( e.getClass().getName() + ": " + e.getMessage() );
             System.exit(0);
         }
-        getAccountsFromDatabase();
     }
 
-    public void getAccountsFromDatabase() {
-        accounts = new ConcurrentHashMap<>();
+    /*public ConcurrentHashMap<String, Account> getAccountsFromDatabase() {
+        ConcurrentHashMap<String, Account> accounts = new ConcurrentHashMap<>();
         Account account;
+        Transfer transfer;
 
         try{
             Statement stmt = c.createStatement();
@@ -74,18 +69,8 @@ public class ServerDataDB {
             }
             rs.close();
             stmt.close();
-            System.out.println(accounts);
-        } catch ( Exception e ) {
-            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
-            System.exit(0);
-        }
-    }
-
-    public void getTransfersFromDatabase(){
-        try {
-            Statement stmt = c.createStatement();
-            ResultSet rs = stmt.executeQuery( "SELECT * FROM transfers;" );
-
+            stmt = c.createStatement();
+            rs = stmt.executeQuery( "SELECT * FROM transfers;" );
             while ( rs.next() ) {
                 int transfer_id = rs.getInt("transfer_id");
                 String source_key = rs.getString("source_key");
@@ -93,7 +78,7 @@ public class ServerDataDB {
                 int amount = rs.getInt("amount");
                 String timestamp = rs.getString("timestamp");
                 int pending = rs.getInt("pending");
-                Transfer transfer = new Transfer(source_key, receiver_key, amount, timestamp);
+                transfer = new Transfer(source_key, receiver_key, amount, timestamp);
                 Account source = accounts.get(source_key);
                 Account receiver = accounts.get(receiver_key);
                 assert source != null;
@@ -111,63 +96,27 @@ public class ServerDataDB {
             rs.close();
             stmt.close();
 
-        } catch ( Exception e ){
+
+        } catch ( Exception e ) {
             System.err.println( e.getClass().getName() + ": " + e.getMessage() );
             System.exit(0);
         }
-    }
-
-    public List<Transfer> auditAccount(String publicKey){
-        getAccountsFromDatabase();
-        getTransfersFromDatabase();
-        Account account = accounts.get(publicKey);
-        if (account == null) {
-            return new ArrayList<Transfer>();
-        }
-        else {
-            return account.getTransfers();
-        }
-    }
-
-    public List<PendingTransfer> checkAccountTransfers(String publicKey){
-        getAccountsFromDatabase();
-        getTransfersFromDatabase();
-        Account account = accounts.get(publicKey);
-        if (account == null) {
-            return new ArrayList<PendingTransfer>();
-        }
-        else {
-            return account.getPendingTransfers();
-        }
-    }
-
-    public int checkAccountBalance(String publicKey){
-        getAccountsFromDatabase();
-        Account account = accounts.get(publicKey);
-        if (account == null) {
-            return 0;
-        }
-        else {
-            return account.balance();
-        }
-    }
+        return accounts;
+    }*/
 
     public void sendAmount(String sender, String receiver, int amount){
+
         Date timestamp = new Date(System.currentTimeMillis());
-        SimpleDateFormat formatter= new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
-        String timestamp_string = formatter.format(timestamp);
+        String timestamp_string = Transfer.DateToString(timestamp);
         var transfer = new Transfer(sender,receiver,amount, timestamp_string);
-        var senderAccount = accounts.get(sender);
+        Account senderAccount = getAccount(sender);
         assert senderAccount != null;
         int sender_balance = senderAccount.balance();
         assert sender_balance - amount > 0;
         senderAccount.changingBalance(-amount);
-        var receiverAccount = accounts.get(receiver);
+        Account receiverAccount = getAccount(receiver);
         assert receiverAccount != null;
-        senderAccount.addPendingTransfer(transfer);
-        receiverAccount.addPendingTransfer(transfer);
         try{
-
             Statement stmt = c.createStatement();
             String sql = "INSERT INTO transfers (source_key, receiver_key, amount, pending, timestamp) " +
                     "VALUES (\"" +  sender + "\",\"" + receiver + "\"," + amount +"," + 1 + ",\"" + timestamp_string +  "\");";
@@ -177,17 +126,45 @@ public class ServerDataDB {
             sql = "UPDATE accounts set balance = " + senderAccount.balance() + " where public_key = \"" + sender + "\";";
             stmt.executeUpdate(sql);
             stmt.close();
-
         } catch ( Exception e ) {
             System.err.println( e.getClass().getName() + ": " + e.getMessage() );
             System.exit(0);
         }
     }
 
-    public void receiveAmount(String sender, String receiver) {
-
-
+    public Account getAccount(String publicKey){
+        Account account = null;
+        Transfer transfer = null;
+        try {
+            Statement stmt = c.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT * FROM accounts WHERE public_key = \"" + publicKey + "\";");
+            account = new Account(rs.getString("public_key"), rs.getInt("balance"));
+            stmt.close();
+            stmt = c.createStatement();
+            rs = stmt.executeQuery("SELECT * FROM transfers WHERE source_key = \"" + publicKey + "\" OR receiver_key = \"" + publicKey + "\";");
+            while ( rs.next() ){
+                int transfer_id = rs.getInt("transfer_id");
+                String source_key = rs.getString("source_key");
+                String receiver_key = rs.getString("receiver_key");
+                int amount = rs.getInt("amount");
+                int pending = rs.getInt("pending");
+                String timestamp = rs.getString("timestamp");
+                transfer = new Transfer(source_key, receiver_key, amount, timestamp);
+                if(pending == 0){
+                    account.addTransfer(transfer);
+                }
+                else{
+                    account.addPendingTransfer(transfer);
+                }
+            }
+        }
+        catch (Exception e){
+            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+            System.exit(0);
+        }
+        return account;
     }
+
 
     /*
 

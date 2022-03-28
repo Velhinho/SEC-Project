@@ -8,14 +8,12 @@ import java.util.Objects;
 
 public final class Account {
     private final String key;
-    private final int account_id;
     private int balance;
     private ArrayList<Transfer> transfers;
     private ArrayList<PendingTransfer> pendingTransfers;
 
-    public Account(String key, int account_id, int balance) {
+    public Account(String key, int balance) {
         this.key = key;
-        this.account_id = account_id;
         this.balance = balance;
         this.transfers = new ArrayList<>();
         this.pendingTransfers = new ArrayList<>();
@@ -47,7 +45,6 @@ public final class Account {
     public String toString() {
         return "Account{" +
                 "key='" + key + '\'' +
-                ", account_id=" + account_id +
                 ", balance=" + balance +
                 ", transfers=" + transfers +
                 ", pendingTransfers=" + pendingTransfers +

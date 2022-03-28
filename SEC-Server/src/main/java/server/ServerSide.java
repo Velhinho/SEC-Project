@@ -7,15 +7,16 @@ import communication.channel.Channel;
 import communication.channel.ChannelException;
 import communication.messages.*;
 //import server.data.ServerData;
+import server.data.Account;
+import server.data.ServerDataController;
 import server.data.ServerDataDB;
 
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class ServerSide {
     private final Channel channel;
 
-    private static final ServerDataDB serverData = new ServerDataDB();
+    private static ServerDataController serverData = new ServerDataController();
 
     public Channel getChannel() {
         return channel;
@@ -44,7 +45,7 @@ public class ServerSide {
             var request = gson.fromJson(requestJson.get("request"), CheckAccountRequest.class);
             System.out.println("checkAccount: " + request);
 
-            var response = List.of(123);
+            var response = List.of();
             var responseJson = makeResponse(response);
             getChannel().sendMessage(responseJson);
 
@@ -52,7 +53,7 @@ public class ServerSide {
             var request = gson.fromJson(requestJson.get("request"), AuditRequest.class);
             System.out.println("audit: " + request);
 
-            var response = List.of(123);
+            var response = List.of();
             var responseJson = makeResponse(response);
             getChannel().sendMessage(responseJson);
 
@@ -68,18 +69,10 @@ public class ServerSide {
             System.out.println("SendAmount: " + request);
             //sendAmount(request.getSender(), request.getReceiver(), request.getAmount());
 
-            var response = List.of(123);
-            var responseJson = makeResponse(response);
-            getChannel().sendMessage(responseJson);
-
         } else if (Objects.equals(requestType, "receiveAmount")) {
             var request = gson.fromJson(requestJson.get("request"), ReceiveAmountRequest.class);
             System.out.println("receiveAmount: " + request);
             //receiveAmount(request.getSender(), request.getReceiver());
-
-            var response = List.of(123);
-            var responseJson = makeResponse(response);
-            getChannel().sendMessage(responseJson);
         }
         else {
             throw new RuntimeException("invalid json message type");
@@ -92,6 +85,34 @@ public class ServerSide {
         serverData.openAccount(publicKey);
     }
 
+
+    private String audit(String publicKey){
+        Account account = serverData.getAccount(publicKey);
+        if( account != null){
+            ArrayList<Transfer> transfers = account.getTransfers();
+            transfers.sort(Comparator.comparing(Transfer::getTimestamp));
+            return "transfers = " + transfers;
+        }
+        return "Account with public key = " + publicKey + " does not exist";
+    }
+
+    private void sendAmount(String sender, String receiver, int amount) {
+        serverData.sendAmount(sender, receiver, amount);
+    }
+
+    private String checkAccount(String publicKey){
+        Account account = serverData.getAccount(publicKey);
+        if( account != null){
+            int balance = account.balance();
+            ArrayList<PendingTransfer> pendingTransfers = account.getPendingTransfers();
+            pendingTransfers.sort(Comparator.comparing(d -> d.transfer().getTimestamp()));
+            return "Account Balance: " + balance + " \n" + pendingTransfers;
+        }
+        return "Account with public key = " + publicKey + " does not exist";
+    }
+
+
+
     /*
 
     private void sendAmount(String sender, String receiver, int amount) {
@@ -102,9 +123,7 @@ public class ServerSide {
         serverData.receiveAmount(sender, receiver);
     }
 
-    private String audit(String publicKey){
-        return serverData.auditAccount(publicKey).toString();
-    }
+
 
     private String checkAccount(String publicKey){
         return "Account Balance: " + serverData.checkAccountBalance(publicKey) + " \n" + serverData.checkAccountTransfers(publicKey).toString();
