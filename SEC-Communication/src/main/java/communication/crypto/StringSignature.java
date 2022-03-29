@@ -15,7 +15,7 @@ public class StringSignature {
             var signedBytes = signature.sign();
             return Base64.getEncoder().encodeToString(signedBytes);
         } catch (Exception e) {
-            throw new CryptoException(e);
+            throw new CryptoException(e.getMessage());
         }
     }
 
@@ -24,10 +24,10 @@ public class StringSignature {
             var signedBytes = Base64.getDecoder().decode(signedText);
             var signature = Signature.getInstance("SHA256withRSA");
             signature.initVerify(publicKey);
-            signature.update(signedBytes);
-            return signature.verify(plainText.getBytes(StandardCharsets.UTF_8));
+            signature.update(plainText.getBytes(StandardCharsets.UTF_8));
+            return signature.verify(signedBytes);
         } catch (Exception e) {
-            throw new CryptoException(e);
+            throw new CryptoException(e.getMessage());
         }
     }
 }

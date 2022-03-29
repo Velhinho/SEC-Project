@@ -45,7 +45,8 @@
                 <configuration>
                     <mainClass>server.Server</mainClass>
                     <arguments>
-                        <argument>argument1</argument>
+                        <argument>serverKeys.jks</argument>
+                        <argument>fixolas</argument>
                     </arguments>
                 </configuration>
             </plugin>

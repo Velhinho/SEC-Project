@@ -33,7 +33,7 @@ public class PlainChannel implements Channel {
                 writer.flush();
             }
         } catch (IOException exception) {
-            throw new ChannelException(exception);
+            throw new ChannelException(exception.getMessage());
         }
     }
 
@@ -44,7 +44,7 @@ public class PlainChannel implements Channel {
             var line = reader.readLine();
             return JsonParser.parseString(line).getAsJsonObject();
         } catch (IOException exception) {
-            throw new ChannelException(exception);
+            throw new ChannelException(exception.getMessage());
         }
     }
 }

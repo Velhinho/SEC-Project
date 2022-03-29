@@ -47,7 +47,7 @@ public class SignedChannel implements Channel {
             writer.println(message);
             writer.flush();
         } catch (Exception exception) {
-            throw new ChannelException(exception);
+            throw new ChannelException(exception.getMessage());
         }
     }
 
@@ -58,7 +58,6 @@ public class SignedChannel implements Channel {
      *
      * {"jsonObject": {"func_call": "check_account", ...}, "signature": asdadsd}
      * */
-
 
     @Override
     public JsonObject receiveMessage() throws ChannelException {
@@ -71,10 +70,10 @@ public class SignedChannel implements Channel {
             if (StringSignature.verify(jsonObject.toString(), signature, getPublicKey())) {
                 return jsonObject;
             } else {
-                throw new RuntimeException("Wrong signature");
+                throw new ChannelException("Wrong signature");
             }
         } catch (IOException | CryptoException exception) {
-            throw new ChannelException(exception);
+            throw new ChannelException(exception.getMessage());
         }
     }
 }
