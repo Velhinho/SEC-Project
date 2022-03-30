@@ -45,7 +45,7 @@ public class ServerSide {
             var request = gson.fromJson(requestJson.get("request"), CheckAccountRequest.class);
             System.out.println("checkAccount: " + request);
 
-            var response = List.of();
+            var response = checkAccount(request.key());
             var responseJson = makeResponse(response);
             getChannel().sendMessage(responseJson);
 
@@ -53,38 +53,49 @@ public class ServerSide {
             var request = gson.fromJson(requestJson.get("request"), AuditRequest.class);
             System.out.println("audit: " + request);
 
-            var response = List.of();
+            var response = audit(request.key());
             var responseJson = makeResponse(response);
             getChannel().sendMessage(responseJson);
 
         } else if (Objects.equals(requestType, "openAccount")) {
             var request = gson.fromJson(requestJson.get("request"), OpenAccountRequest.class);
-
             System.out.println("openAccount: " + request);
-            System.out.println("\n");
-            openAccount(request.getPublicKey());
+
+            var stringResponse = openAccount(request.getPublicKey());
+            var responseJson = makeResponse(stringResponse);
+            getChannel().sendMessage(responseJson);
 
         } else if (Objects.equals(requestType, "sendAmount")) {
             var request = gson.fromJson(requestJson.get("request"), SendAmountRequest.class);
             System.out.println("SendAmount: " + request);
-            //sendAmount(request.getSender(), request.getReceiver(), request.getAmount());
+
+            var stringResponse = sendAmount(request.getSender(), request.getReceiver(), request.getAmount());
+            var responseJson = makeResponse(stringResponse);
+            getChannel().sendMessage(responseJson);
 
         } else if (Objects.equals(requestType, "receiveAmount")) {
             var request = gson.fromJson(requestJson.get("request"), ReceiveAmountRequest.class);
             System.out.println("receiveAmount: " + request);
-            //receiveAmount(request.getSender(), request.getReceiver());
+
+            var stringResponse =  receiveAmount(request.getSender(), request.getReceiver());
+            var responseJson = makeResponse(stringResponse);
+            getChannel().sendMessage(responseJson);
         }
         else {
             throw new RuntimeException("invalid json message type");
         }
     }
 
-
-
-    private void openAccount(String publicKey){
-        serverData.openAccount(publicKey);
+    private String openAccount(String publicKey){
+        Account account = serverData.getAccount(publicKey);
+        if (account == null){
+            serverData.openAccount(publicKey);
+            return "Account Opened With Success!";
+        }
+        else{
+            return "Account with Public Key = " + publicKey + "already exists";
+        }
     }
-
 
     private String audit(String publicKey){
         Account account = serverData.getAccount(publicKey);
@@ -96,8 +107,8 @@ public class ServerSide {
         return "Account with public key = " + publicKey + " does not exist";
     }
 
-    private void sendAmount(String sender, String receiver, int amount) {
-        serverData.sendAmount(sender, receiver, amount);
+    private String sendAmount(String sender, String receiver, int amount) {
+        return serverData.sendAmount(sender, receiver, amount);
     }
 
     private String checkAccount(String publicKey){
@@ -111,24 +122,8 @@ public class ServerSide {
         return "Account with public key = " + publicKey + " does not exist";
     }
 
-
-
-    /*
-
-    private void sendAmount(String sender, String receiver, int amount) {
-        serverData.sendAmount(sender, receiver, amount);
+    private String receiveAmount(String senderKey, String receiverKey){
+        return serverData.receiveAmount(senderKey, receiverKey);
     }
-
-    private void receiveAmount(String sender, String receiver){
-        serverData.receiveAmount(sender, receiver);
-    }
-
-
-
-    private String checkAccount(String publicKey){
-        return "Account Balance: " + serverData.checkAccountBalance(publicKey) + " \n" + serverData.checkAccountTransfers(publicKey).toString();
-    }
-
-     */
 
 }

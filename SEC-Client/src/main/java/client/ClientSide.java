@@ -31,16 +31,27 @@ public class ClientSide {
         return requestJson;
     }
 
-    public void openAccount(PublicKey publicKey) throws Exception {
+    public String openAccount(PublicKey publicKey) throws Exception {
         var request = new OpenAccountRequest(publicKey);
         var requestJson = makeRequest("openAccount", request);
         getChannel().sendMessage(requestJson);
+
+        var gson = new Gson();
+        var responseJson = getChannel().receiveMessage().get("response");
+        var response =  gson.fromJson(responseJson, new TypeToken<String>(){}.getType());
+        System.out.println(response);
+        return (String) response;
     }
 
     public void sendAmountRequest(PublicKey sender, PublicKey receiver, int ammount) throws Exception {
         var request = new SendAmountRequest(sender, receiver, ammount);
         var requestJson = makeRequest("sendAmount", request);
         getChannel().sendMessage(requestJson);
+
+        var gson = new Gson();
+        var responseJson = getChannel().receiveMessage().get("response");
+        var response =  gson.fromJson(responseJson, new TypeToken<String>(){}.getType());
+        System.out.println(response);
     }
 
     public void checkAccount(PublicKey publicKey) throws Exception {
@@ -50,7 +61,7 @@ public class ClientSide {
 
         var gson = new Gson();
         var responseJson = getChannel().receiveMessage().get("response");
-        var response =  gson.fromJson(responseJson, new TypeToken<ArrayList<Integer>>(){}.getType());
+        var response =  gson.fromJson(responseJson, new TypeToken<String>(){}.getType());
         System.out.println(response);
     }
 
@@ -58,6 +69,11 @@ public class ClientSide {
         var request = new ReceiveAmountRequest(sender, receiver);
         var requestJson = makeRequest("receiveAmount", request);
         getChannel().sendMessage(requestJson);
+
+        var gson = new Gson();
+        var responseJson = getChannel().receiveMessage().get("response");
+        var response =  gson.fromJson(responseJson, new TypeToken<String>(){}.getType());
+        System.out.println(response);
     }
 
     public void audit(PublicKey publicKey) throws Exception {
@@ -67,7 +83,7 @@ public class ClientSide {
 
         var gson = new Gson();
         var responseJson = getChannel().receiveMessage().get("response");
-        var response =  gson.fromJson(responseJson, new TypeToken<ArrayList<Integer>>(){}.getType());
+        var response =  gson.fromJson(responseJson, new TypeToken<String>(){}.getType());
         System.out.println(response);
     }
 }

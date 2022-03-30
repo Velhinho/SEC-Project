@@ -9,6 +9,7 @@ public final class OpenCommand implements Command {
     private final String keyString;
 
     public OpenCommand(String keyString) {
+        System.out.println(keyString);
         this.keyString = keyString;
     }
 

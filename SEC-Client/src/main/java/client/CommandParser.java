@@ -65,12 +65,7 @@ public class CommandParser {
     }
 
     public static void parseCommand(ClientSide clientSide) throws Exception {
-        var commands = """
-                open <KEY>
-                check <KEY>
-                send <SENDER KEY> <RECEIVER KEY> <AMOUNT>
-                receive <SENDER KEY> <RECEIVER KEY>
-                audit <KEY>""";
+        var commands = "open <KEY> \ncheck <KEY> \nsend <SENDER KEY> <RECEIVER KEY> <AMOUNT> \nreceive <SENDER KEY> <RECEIVER KEY> \naudit <KEY>";
         System.out.println("Commands:\n" + commands);
 
         var reader = new BufferedReader(new InputStreamReader(System.in));
