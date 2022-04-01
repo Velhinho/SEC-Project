@@ -16,8 +16,11 @@ public class ClientSide {
         return channel;
     }
 
+    public PublicKey ourPublicKey;
+
     public ClientSide(Channel channel, PublicKey ourPublicKey) {
         this.channel = channel;
+        this.ourPublicKey = ourPublicKey;
     }
 
     private JsonObject makeRequest(String requestType, Object request) {
@@ -54,7 +57,7 @@ public class ClientSide {
     }
 
     public String checkAccount(PublicKey publicKey) throws Exception {
-        var request = new CheckAccountRequest(publicKey);
+        var request = new CheckAccountRequest(ourPublicKey, publicKey);
         var requestJson = makeRequest("checkAccount", request);
         getChannel().sendMessage(requestJson);
 
@@ -78,7 +81,7 @@ public class ClientSide {
     }
 
     public String audit(PublicKey publicKey) throws Exception {
-        var request = new AuditRequest(publicKey);
+        var request = new AuditRequest(ourPublicKey,publicKey);
         var requestJson = makeRequest("audit", request);
         getChannel().sendMessage(requestJson);
 

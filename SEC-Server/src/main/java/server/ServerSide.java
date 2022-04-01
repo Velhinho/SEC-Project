@@ -48,7 +48,7 @@ public class ServerSide {
             var request = gson.fromJson(requestJson.get("request"), CheckAccountRequest.class);
             System.out.println("checkAccount: " + request);
 
-            var response = checkAccount(request.key());
+            var response = checkAccount(request.getCheckKey());
             var responseJson = makeResponse(response);
             getChannel().sendMessage(responseJson);
 
@@ -56,7 +56,7 @@ public class ServerSide {
             var request = gson.fromJson(requestJson.get("request"), AuditRequest.class);
             System.out.println("audit: " + request);
 
-            var response = audit(request.key());
+            var response = audit(request.getAuditKey());
             var responseJson = makeResponse(response);
             getChannel().sendMessage(responseJson);
 

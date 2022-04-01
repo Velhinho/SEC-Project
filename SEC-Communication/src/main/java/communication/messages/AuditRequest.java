@@ -7,13 +7,19 @@ import java.util.Objects;
 
 public final class AuditRequest {
     private final String key;
+    private final String auditKey;
 
-    public AuditRequest(PublicKey key) {
+    public AuditRequest(PublicKey key, PublicKey auditKey) {
         this.key = KeyConversion.keyToString(key);
+        this.auditKey = KeyConversion.keyToString(auditKey);
     }
 
     public String key() {
         return key;
+    }
+
+    public String getAuditKey() {
+        return auditKey;
     }
 
     @Override

@@ -1,6 +1,4 @@
 import client.ClientSide;
-import communication.channel.Channel;
-import communication.channel.PlainChannel;
 import communication.channel.ClientChannel;
 import communication.crypto.KeyConversion;
 import org.junit.jupiter.api.*;
@@ -148,6 +146,11 @@ class ClientSideTest {
     }
 
     //CheckAccount Test
+    @Test
+    @Order(9)
+    void checkAccountButNoAccount() throws Exception {
+        assertEquals("Account with public key = " + KeyConversion.keyToString(publicKey3) + " does not exist", clientSide.checkAccount(publicKey3));
+    }
 
     @Test
     @Order(10)
@@ -211,6 +214,13 @@ class ClientSideTest {
     }
 
     //Audit Tests
+    @Test
+    @Order(16)
+    void AuditAnAccountThatDoesntExist() throws Exception {
+        String publicKey3String = KeyConversion.keyToString(publicKey3);
+        assertEquals( "Account with public key = " + publicKey3String + " does not exist", clientSide.audit(publicKey3));
+    }
+
 
     @Test
     @Order(17)
@@ -224,7 +234,7 @@ class ClientSideTest {
                      "sender=" + KeyConversion.keyToString(publicKey2) + ", " +
                      "receiver=" + KeyConversion.keyToString(publicKey) + ", " +
                      "amount=" + 5 + ']' + ']'
-                     , clientSide.audit(publicKey));
+                     , clientSide.audit(publicKey2));
     }
 
     @Test
@@ -238,7 +248,7 @@ class ClientSideTest {
                      " Transfer[" +
                      "sender=" + KeyConversion.keyToString(publicKey2) + ", " +
                      "receiver=" + KeyConversion.keyToString(publicKey) + ", " +
-                     "amount=" + 5 + ']' + ']',clientSide2.audit(publicKey2));
+                     "amount=" + 5 + ']' + ']',clientSide.audit(publicKey2));
     }
 
 }

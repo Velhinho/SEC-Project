@@ -7,13 +7,19 @@ import java.util.Objects;
 
 public final class CheckAccountRequest {
     private final String key;
+    private final String checkKey;
 
-    public CheckAccountRequest(PublicKey key) {
+    public CheckAccountRequest(PublicKey key, PublicKey checkKey) {
         this.key = KeyConversion.keyToString(key);
+        this.checkKey = KeyConversion.keyToString(checkKey);
     }
 
     public String key() {
         return key;
+    }
+
+    public String getCheckKey() {
+        return checkKey;
     }
 
     @Override
