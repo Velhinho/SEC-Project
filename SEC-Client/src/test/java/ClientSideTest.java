@@ -67,6 +67,7 @@ class ClientSideTest {
         privateKey3 = keyPair3.getPrivate();
 
         /* Generates the socket, channel and clientSide */
+        /*
         socket = new Socket("localhost", 8080);
         socket2 = new Socket("localhost", 8080);
         socket3 = new Socket("localhost", 8080);
@@ -76,7 +77,21 @@ class ClientSideTest {
         clientSide = new ClientSide(channel, publicKey);
         clientSide2 = new ClientSide(channel2, publicKey2);
         clientSide3 = new ClientSide(channel3, publicKey3);
+        */
 
+    }
+
+    @BeforeEach
+    void setupSockets() throws Exception{
+        socket = new Socket("localhost", 8080);
+        socket2 = new Socket("localhost", 8080);
+        socket3 = new Socket("localhost", 8080);
+        channel = new ClientChannel(socket, privateKey);
+        channel2 = new ClientChannel(socket2, privateKey2);
+        channel3 = new ClientChannel(socket3, privateKey3);
+        clientSide = new ClientSide(channel, publicKey);
+        clientSide2 = new ClientSide(channel2, publicKey2);
+        clientSide3 = new ClientSide(channel3, publicKey3);
     }
 
     //OpenAccounts Test
@@ -133,11 +148,6 @@ class ClientSideTest {
     }
 
     //CheckAccount Test
-    @Test
-    @Order(9)
-    void checkAccountButNoAccount() throws Exception {
-        assertEquals("Account with public key = " + KeyConversion.keyToString(publicKey3) + " does not exist", clientSide.checkAccount(publicKey3));
-    }
 
     @Test
     @Order(10)
@@ -201,12 +211,6 @@ class ClientSideTest {
     }
 
     //Audit Tests
-    @Test
-    @Order(16)
-    void AuditAnAccountThatDoesntExist() throws Exception {
-        String publicKey3String = KeyConversion.keyToString(publicKey3);
-        assertEquals( "Account with public key = " + publicKey3String + " does not exist", clientSide.audit(publicKey3));
-    }
 
     @Test
     @Order(17)
@@ -220,7 +224,7 @@ class ClientSideTest {
                      "sender=" + KeyConversion.keyToString(publicKey2) + ", " +
                      "receiver=" + KeyConversion.keyToString(publicKey) + ", " +
                      "amount=" + 5 + ']' + ']'
-                     , clientSide2.audit(publicKey));
+                     , clientSide.audit(publicKey));
     }
 
     @Test
@@ -234,43 +238,7 @@ class ClientSideTest {
                      " Transfer[" +
                      "sender=" + KeyConversion.keyToString(publicKey2) + ", " +
                      "receiver=" + KeyConversion.keyToString(publicKey) + ", " +
-                     "amount=" + 5 + ']' + ']',clientSide.audit(publicKey2));
+                     "amount=" + 5 + ']' + ']',clientSide2.audit(publicKey2));
     }
 
-    // Authorization Tests
-    @Test
-    @Order(19)
-    void OpenAnAccountWithAnotherPublicKey() throws Exception{
-        assertEquals("Unauthorized Operation. Can only create an account with your Public Key", clientSide.openAccount(publicKey3));
-    }
-
-    @Test
-    @Order(20)
-    void openAnAccountWithRightPublicKey() throws Exception {
-        assertEquals("Account Opened With Success!",clientSide3.openAccount(publicKey3));
-    }
-
-    @Test
-    @Order(21)
-    void sendAmountWithAnotherPublicKey() throws Exception {
-        assertEquals("Unauthorized Operation. Can only send money from accounts with Public Key associated to yours.", clientSide.sendAmountRequest(publicKey3, publicKey, 5));
-    }
-
-    @Test
-    @Order(22)
-    void sendAmountWithRightPublicKey() throws Exception {
-        assertEquals("Transfer made with success.", clientSide3.sendAmountRequest(publicKey3, publicKey, 5));
-    }
-
-    @Test
-    @Order(23)
-    void receiveAmountWithAnotherPublicKey() throws Exception{
-        assertEquals("Unauthorized Operation. Can only accept money to an account with Public Key associated to yours.", clientSide3.receiveAmountRequest(publicKey3, publicKey));
-    }
-
-    @Test
-    @Order(24)
-    void receiveAmountWithRightPublicKey() throws Exception{
-        assertEquals("Transfer received with success!", clientSide.receiveAmountRequest(publicKey3, publicKey));
-    }
 }
