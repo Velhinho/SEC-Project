@@ -5,20 +5,20 @@ import communication.crypto.KeyConversion;
 import java.security.PublicKey;
 
 public class OpenAccountRequest {
-    private final String publicKey;
+    private final String key;
 
     public OpenAccountRequest(PublicKey publicKey){
-        this.publicKey = KeyConversion.keyToString(publicKey);
+        this.key = KeyConversion.keyToString(publicKey);
     }
 
-    public String getPublicKey() {
-        return publicKey;
+    public String getKey() {
+        return key;
     }
 
     @Override
     public String toString() {
         return "OpenAccountRequest{" +
-                "publicKey='" + publicKey + '\'' +
+                "key='" + key + '\'' +
                 '}';
     }
 }

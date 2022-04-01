@@ -77,7 +77,7 @@ public class ServerSide {
         } else if (Objects.equals(requestType, "openAccount")) {
             var request = gson.fromJson(requestJson.get("request"), OpenAccountRequest.class);
             System.out.println("openAccount: " + request);
-            var stringResponse = openAccount(request.getPublicKey());
+            var stringResponse = openAccount(request.getKey());
             var responseJson = makeResponse(stringResponse);
             getChannel().sendMessage(responseJson);
 
