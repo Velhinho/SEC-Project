@@ -18,7 +18,7 @@ import java.util.Objects;
 
 public class SignedChannel implements Channel {
     private final Socket socket;
-    private final PublicKey publicKey;
+    private PublicKey publicKey;
     private final PrivateKey privateKey;
 
     public Socket getSocket() {
@@ -33,10 +33,19 @@ public class SignedChannel implements Channel {
         return privateKey;
     }
 
+    public SignedChannel(Socket socket, PrivateKey privateKey){
+        this.socket = socket;
+        this.privateKey = privateKey;
+    }
+
     public SignedChannel(Socket socket, PublicKey publicKey, PrivateKey privateKey) {
         this.socket = socket;
         this.publicKey = publicKey;
         this.privateKey = privateKey;
+    }
+
+    public void setPublicKey(PublicKey publicKey) {
+        this.publicKey = publicKey;
     }
 
     private long askNonce() throws IOException {
@@ -101,15 +110,6 @@ public class SignedChannel implements Channel {
         }
     }
 
-    /*
-     *
-     * {"func_call": "check_account", ...}
-     *
-     * {"jsonObject": {"func_call": "check_account", ...}, "nonce": 123123}
-     *
-     * {"jsonWithNonce": {"jsonObject": {"func_call": "check_account", ...}, "nonce": 123123}, "signature": asdadsd}
-     * */
-
     private JsonObject unpackSignature(JsonObject message) throws ChannelException, CryptoException {
         var jsonWithNonce = message.getAsJsonObject("jsonWithNonce");
         var signature = message.get("signature").getAsString();
@@ -144,5 +144,9 @@ public class SignedChannel implements Channel {
         } catch (IOException | CryptoException exception) {
             throw new ChannelException(exception.getMessage());
         }
+    }
+
+    public void closeSocket() throws IOException{
+        socket.close();
     }
 }

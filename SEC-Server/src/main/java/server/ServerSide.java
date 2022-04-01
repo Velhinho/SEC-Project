@@ -5,27 +5,47 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import communication.channel.Channel;
 import communication.channel.ChannelException;
+import communication.channel.SignedChannel;
+import communication.crypto.CryptoException;
+import communication.crypto.KeyConversion;
+import communication.crypto.StringSignature;
 import communication.messages.*;
 //import server.data.ServerData;
 import server.data.Account;
 import server.data.ServerDataController;
-import server.data.ServerDataDB;
+import server.data.ServerDataControllerTransactions;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.security.PublicKey;
 import java.util.*;
 
 public class ServerSide {
-    private final Channel channel;
+    private final SignedChannel channel;
 
-    private static ServerDataController serverData = new ServerDataController();
+    //private static ServerDataController serverData = new ServerDataController();
+    private static ServerDataControllerTransactions serverData = new ServerDataControllerTransactions();
 
-    public Channel getChannel() {
+    public SignedChannel getChannel() {
         return channel;
     }
 
-    public ServerSide(Channel channel) {
+    public ServerSide(SignedChannel channel) {
         this.channel = channel;
     }
 
+    public void receiveClientPublicKey() throws IOException, CryptoException {
+        var reader = new BufferedReader(new InputStreamReader(channel.getSocket().getInputStream()));
+        var publicKey = reader.readLine();
+        channel.setPublicKey(KeyConversion.stringToKey(publicKey));
+        String response = "Key Passed With Sucess";
+        var signature = StringSignature.sign(response, channel.getPrivateKey());
+        var writer = new PrintWriter(channel.getSocket().getOutputStream());
+        writer.println(signature);
+        writer.flush();
+    }
 
 
     private JsonObject makeResponse(Object response) {
@@ -60,7 +80,6 @@ public class ServerSide {
         } else if (Objects.equals(requestType, "openAccount")) {
             var request = gson.fromJson(requestJson.get("request"), OpenAccountRequest.class);
             System.out.println("openAccount: " + request);
-
             var stringResponse = openAccount(request.getPublicKey());
             var responseJson = makeResponse(stringResponse);
             getChannel().sendMessage(responseJson);

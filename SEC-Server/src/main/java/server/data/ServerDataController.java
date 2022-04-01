@@ -88,6 +88,7 @@ public class ServerDataController {
             while (rs.next()) {
                 account = new Account(rs.getString("public_key"), rs.getInt("balance"));
             }
+
             stmt.close();
             stmt = c.createStatement();
             rs = stmt.executeQuery("SELECT * FROM transfers WHERE source_key = \"" + publicKey + "\" OR receiver_key = \"" + publicKey + "\";");

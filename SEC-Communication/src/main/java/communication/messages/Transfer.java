@@ -18,7 +18,7 @@ public final class Transfer {
     }
 
     public static Date stringToDate(String timestamp){
-        SimpleDateFormat formatter= new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
+        SimpleDateFormat formatter= new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss.SSS z");
         Date date = null;
         try{
             date = formatter.parse(timestamp);
@@ -34,7 +34,8 @@ public final class Transfer {
     }
 
     public static String DateToString(Date date){
-        SimpleDateFormat formatter= new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
+        //SimpleDateFormat formatter= new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
+        SimpleDateFormat formatter= new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss.SSS z");
         return formatter.format(date);
     }
 
