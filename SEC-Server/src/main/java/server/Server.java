@@ -18,14 +18,12 @@ import java.util.concurrent.Executors;
 
 public class Server {
     private static void serveClient(Socket client, PrivateKey serverKey) throws RuntimeException {
-        try {
+        try(client) {
             var channel = new SignedChannel(client, serverKey);
             var serverSide = new ServerSide(channel);
             serverSide.receiveClientPublicKey();
             System.out.println(serverSide.getChannel().getPublicKey());
-            while (true) {
-                serverSide.processRequest();
-            }
+            serverSide.processRequest();
         } catch (RuntimeException | ChannelException | IOException | CryptoException e) {
             e.printStackTrace(System.err);
             System.err.println(e.getMessage());
