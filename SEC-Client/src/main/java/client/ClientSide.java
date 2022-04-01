@@ -5,7 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import communication.channel.Channel;
-import communication.channel.SignedChannel;
+import communication.channel.ClientChannel;
 import communication.crypto.CryptoException;
 import communication.crypto.KeyConversion;
 import communication.crypto.StringSignature;
@@ -20,27 +20,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ClientSide {
-    private final SignedChannel channel;
+    private final ClientChannel channel;
 
     private final PublicKey ourPublicKey;
 
-    public SignedChannel getChannel() {
+    public ClientChannel getChannel() {
         return channel;
     }
 
-    public ClientSide(SignedChannel channel, PublicKey ourPublicKey) {
+    public ClientSide(ClientChannel channel, PublicKey ourPublicKey) {
         this.channel = channel;
         this.ourPublicKey = ourPublicKey;
-    }
-
-    public boolean sendPublicKey() throws IOException, CryptoException {
-        var writer = new PrintWriter(channel.getSocket().getOutputStream());
-        writer.println(KeyConversion.keyToString(ourPublicKey));
-        writer.flush();
-        var reader = new BufferedReader(new InputStreamReader(channel.getSocket().getInputStream()));
-        var response = reader.readLine();
-        System.out.println(response);
-        return StringSignature.verify("Key Passed With Success", response, channel.getPublicKey());
     }
 
     private JsonObject makeRequest(String requestType, Object request) {

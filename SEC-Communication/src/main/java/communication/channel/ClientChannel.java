@@ -17,7 +17,7 @@ import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.util.Objects;
 
-public class SignedChannel implements Channel {
+public class ClientChannel implements Channel {
     private final Socket socket;
     private final PrivateKey privateKey;
 
@@ -29,7 +29,7 @@ public class SignedChannel implements Channel {
         return privateKey;
     }
 
-    public SignedChannel(Socket socket, PrivateKey privateKey){
+    public ClientChannel(Socket socket, PrivateKey privateKey){
         this.socket = socket;
         this.privateKey = privateKey;
     }
@@ -102,8 +102,6 @@ public class SignedChannel implements Channel {
         var key = message.get("jsonWithNonce")
             .getAsJsonObject()
             .get("jsonObject")
-            .getAsJsonObject()
-            .get("request")
             .getAsJsonObject()
             .get("key")
             .getAsString();

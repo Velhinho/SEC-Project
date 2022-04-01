@@ -1,7 +1,7 @@
 package client;
 
 import communication.channel.PlainChannel;
-import communication.channel.SignedChannel;
+import communication.channel.ClientChannel;
 import communication.crypto.KeyConversion;
 import org.junit.runner.RunWith;
 
@@ -39,9 +39,8 @@ public class Client {
 
             while (true) {
                 try (var socket = new Socket("localhost", 8080)) {
-                    var channel = new SignedChannel(socket, serverPublicKey, keyPair.getPrivate());
+                    var channel = new ClientChannel(socket, keyPair.getPrivate());
                     var clientSide = new ClientSide(channel, keyPair.getPublic());
-                    clientSide.sendPublicKey();
                     System.out.println("Enter command");
                     CommandParser.parseCommand(clientSide);
                 }

@@ -17,11 +17,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.security.KeyPair;
 import java.util.*;
 
 public class ServerSide {
     private final SignedChannel channel;
-
+    private final KeyPair keyPair;
     //private static ServerDataController serverData = new ServerDataController();
     private static ServerDataControllerTransactions serverData = new ServerDataControllerTransactions();
 
@@ -29,19 +30,9 @@ public class ServerSide {
         return channel;
     }
 
-    public ServerSide(SignedChannel channel) {
+    public ServerSide(SignedChannel channel, KeyPair keyPair) {
         this.channel = channel;
-    }
-
-    public void receiveClientPublicKey() throws IOException, CryptoException {
-        var reader = new BufferedReader(new InputStreamReader(channel.getSocket().getInputStream()));
-        var publicKey = reader.readLine();
-        channel.setPublicKey(KeyConversion.stringToKey(publicKey));
-        String response = "Key Passed With Success";
-        var signature = StringSignature.sign(response, channel.getPrivateKey());
-        var writer = new PrintWriter(channel.getSocket().getOutputStream());
-        writer.println(signature);
-        writer.flush();
+        this.keyPair = keyPair;
     }
 
 
@@ -49,6 +40,8 @@ public class ServerSide {
         var gson = new Gson();
         var responseJson = new JsonObject();
         responseJson.add("response", JsonParser.parseString(gson.toJson(response)));
+        var key = KeyConversion.keyToString(keyPair.getPublic());
+        responseJson.addProperty("key", key);
         return responseJson;
     }
 
@@ -103,9 +96,6 @@ public class ServerSide {
     }
 
     private String openAccount(String publicKey){
-        if (!publicKey.equals(KeyConversion.keyToString(channel.getPublicKey()))){
-            return "Unauthorized Operation. Can only create an account with your Public Key";
-        }
         Account account = serverData.getAccount(publicKey);
         if (account == null){
             serverData.openAccount(publicKey);
@@ -127,9 +117,6 @@ public class ServerSide {
     }
 
     private String sendAmount(String sender, String receiver, int amount) {
-        if (!sender.equals(KeyConversion.keyToString(channel.getPublicKey()))){
-            return "Unauthorized Operation. Can only send money from accounts with Public Key associated to yours.";
-        }
         return serverData.sendAmount(sender, receiver, amount);
     }
 
@@ -145,9 +132,6 @@ public class ServerSide {
     }
 
     private String receiveAmount(String senderKey, String receiverKey){
-        if (!receiverKey.equals(KeyConversion.keyToString(channel.getPublicKey()))){
-            return "Unauthorized Operation. Can only accept money to an account with Public Key associated to yours.";
-        }
         return serverData.receiveAmount(senderKey, receiverKey);
     }
 

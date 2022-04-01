@@ -17,14 +17,12 @@ import java.security.PublicKey;
 import java.util.concurrent.Executors;
 
 public class Server {
-    private static void serveClient(Socket client, PrivateKey serverKey) throws RuntimeException {
-        try(client) {
-            var channel = new SignedChannel(client, serverKey);
-            var serverSide = new ServerSide(channel);
-            serverSide.receiveClientPublicKey();
-            System.out.println(serverSide.getChannel().getPublicKey());
+    private static void serveClient(Socket client, KeyPair keyPair) throws RuntimeException {
+        try (client) {
+            var channel = new SignedChannel(client, keyPair.getPrivate());
+            var serverSide = new ServerSide(channel, keyPair);
             serverSide.processRequest();
-        } catch (RuntimeException | ChannelException | IOException | CryptoException e) {
+        } catch (RuntimeException | ChannelException | IOException e) {
             e.printStackTrace(System.err);
             System.err.println(e.getMessage());
         }
@@ -56,7 +54,7 @@ public class Server {
                 System.out.println("Waiting for client");
                 var client = serverSocket.accept();
                 System.out.println("Accepted client");
-                executorService.submit(() -> serveClient(client, keyPair.getPrivate()));
+                executorService.submit(() -> serveClient(client, keyPair));
             }
         } catch (IOException e) {
                 e.printStackTrace(System.err);
