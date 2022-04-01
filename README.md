@@ -11,3 +11,4 @@ where `<N>` is the number associated with the `clientKeys<N>.jks` file. A possib
 * The client has a text command line. It prints the possible commands once started.
 * The keys used in the command line are in Base64. There are sample keys to copy and paste in the publickeys.csv file
 * The command line also prints it's own public key from the `clientKeys<N>.jks`
+* The maven version is Maven 3.8.4. The Java version is 17.0.2.
