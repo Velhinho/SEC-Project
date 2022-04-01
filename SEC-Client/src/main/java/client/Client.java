@@ -1,5 +1,6 @@
 package client;
 
+import communication.channel.BadChannel;
 import communication.channel.PlainChannel;
 import communication.channel.ClientChannel;
 import communication.crypto.KeyConversion;
@@ -9,6 +10,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
 import java.security.*;
+import java.util.Arrays;
+import java.util.Objects;
 
 public class Client {
     private static KeyPair getKeyPair(String arg0, String arg1, String arg2) throws RuntimeException {
@@ -29,20 +32,27 @@ public class Client {
 
     public static void main(String[] args) {
         System.out.println("Starting Client");
+        System.out.println("Args:" + Arrays.toString(args));
 
         try {
             var keyPair = getKeyPair(args[0], args[1], args[2]);
-            System.out.println(KeyConversion.keyToString(keyPair.getPublic()));
-            var serverPublicKey = KeyConversion.stringToKey("MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDR5XF" +
-                    "Qum9i0YS5clSPUpc4tVsd/fr383tXqhEu3+vYAi0ORqFQ/7h6ZlSH66xO6etg9Z1reyjsSo81t9rt1jg8Jo3JGhDf053e" +
-                    "8KDXr9HJgqLSZPi1VJtlvJV4jZ4xBdKtsG0A95XA/CeA3JaQB8ZmV5mY8qj/SRIWanS4JT7kzQIDAQAB");
+            System.out.println("My Key: " + KeyConversion.keyToString(keyPair.getPublic()));
 
             while (true) {
                 try (var socket = new Socket("localhost", 8080)) {
-                    var channel = new ClientChannel(socket, keyPair.getPrivate());
-                    var clientSide = new ClientSide(channel, keyPair.getPublic());
-                    System.out.println("Enter command");
-                    CommandParser.parseCommand(clientSide);
+                    if (Objects.equals(args[3], "yes")) {
+                        var channel = new BadChannel(socket, keyPair.getPrivate());
+                        var clientSide = new ClientSide(channel, keyPair.getPublic());
+                        System.out.println();
+                        System.out.println("Enter command");
+                        CommandParser.parseCommand(clientSide);
+                    } else {
+                        var channel = new ClientChannel(socket, keyPair.getPrivate());
+                        var clientSide = new ClientSide(channel, keyPair.getPublic());
+                        System.out.println();
+                        System.out.println("Enter command");
+                        CommandParser.parseCommand(clientSide);
+                    }
                 }
             }
 

@@ -273,12 +273,4 @@ class ClientSideTest {
     void receiveAmountWithRightPublicKey() throws Exception{
         assertEquals("Transfer received with success!", clientSide.receiveAmountRequest(publicKey3, publicKey));
     }
-
-    @AfterAll
-    static void closeStuff() throws Exception {
-        clientSide.getChannel().closeSocket();
-        clientSide2.getChannel().closeSocket();
-        clientSide3.getChannel().closeSocket();
-    }
-
 }

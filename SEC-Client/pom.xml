@@ -62,6 +62,7 @@
                         <argument>clientKeys</argument>
                         <argument>fixolas</argument>
                         <argument>${clientNumber}</argument>
+                        <argument>${badChannel}</argument>
                     </arguments>
                 </configuration>
             </plugin>

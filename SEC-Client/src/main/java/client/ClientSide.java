@@ -5,32 +5,19 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import communication.channel.Channel;
-import communication.channel.ClientChannel;
-import communication.crypto.CryptoException;
-import communication.crypto.KeyConversion;
-import communication.crypto.StringSignature;
 import communication.messages.*;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.security.PublicKey;
-import java.util.ArrayList;
-import java.util.List;
 
 public class ClientSide {
-    private final ClientChannel channel;
+    private final Channel channel;
 
-    private final PublicKey ourPublicKey;
-
-    public ClientChannel getChannel() {
+    public Channel getChannel() {
         return channel;
     }
 
-    public ClientSide(ClientChannel channel, PublicKey ourPublicKey) {
+    public ClientSide(Channel channel, PublicKey ourPublicKey) {
         this.channel = channel;
-        this.ourPublicKey = ourPublicKey;
     }
 
     private JsonObject makeRequest(String requestType, Object request) {

@@ -13,7 +13,7 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.security.PrivateKey;
 
-public class ClientChannel implements Channel {
+public class BadChannel implements Channel {
     private final Socket socket;
     private final PrivateKey privateKey;
     private long nonce;
@@ -34,7 +34,7 @@ public class ClientChannel implements Channel {
         return privateKey;
     }
 
-    public ClientChannel(Socket socket, PrivateKey privateKey){
+    public BadChannel(Socket socket, PrivateKey privateKey){
         this.socket = socket;
         this.privateKey = privateKey;
     }
@@ -59,7 +59,7 @@ public class ClientChannel implements Channel {
 
     private JsonObject appendSignature(JsonObject jsonObject, String signature) {
         var newJson = new JsonObject();
-        newJson.addProperty("signature", signature);
+        newJson.addProperty("signature", signature + "asd");
         newJson.add("jsonWithNonce", jsonObject);
         return newJson;
     }
@@ -84,11 +84,11 @@ public class ClientChannel implements Channel {
         var jsonWithNonce = message.getAsJsonObject("jsonWithNonce");
         var signature = message.get("signature").getAsString();
         var key = message.get("jsonWithNonce")
-            .getAsJsonObject()
-            .get("jsonObject")
-            .getAsJsonObject()
-            .get("key")
-            .getAsString();
+                .getAsJsonObject()
+                .get("jsonObject")
+                .getAsJsonObject()
+                .get("key")
+                .getAsString();
         var publicKey = KeyConversion.stringToKey(key);
         if (StringSignature.verify(jsonWithNonce.toString(), signature, publicKey)) {
             return jsonWithNonce;

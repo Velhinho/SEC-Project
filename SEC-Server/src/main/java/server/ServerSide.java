@@ -43,7 +43,6 @@ public class ServerSide {
         var requestJson = getChannel().receiveMessage();
         var requestType = requestJson.get("requestType").getAsString();
         var gson = new Gson();
-        System.out.println("Json: " + requestJson);
 
         if (Objects.equals(requestType, "checkAccount")) {
             var request = gson.fromJson(requestJson.get("request"), CheckAccountRequest.class);
