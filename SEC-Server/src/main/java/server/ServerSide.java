@@ -3,7 +3,6 @@ package server;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import communication.channel.Channel;
 import communication.channel.ChannelException;
 import communication.channel.SignedChannel;
 import communication.crypto.CryptoException;
@@ -12,14 +11,12 @@ import communication.crypto.StringSignature;
 import communication.messages.*;
 //import server.data.ServerData;
 import server.data.Account;
-import server.data.ServerDataController;
 import server.data.ServerDataControllerTransactions;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.security.PublicKey;
 import java.util.*;
 
 public class ServerSide {
@@ -106,6 +103,9 @@ public class ServerSide {
     }
 
     private String openAccount(String publicKey){
+        if (!publicKey.equals(KeyConversion.keyToString(channel.getPublicKey()))){
+            return "Unauthorized Operation. Can only create an account with your Public Key";
+        }
         Account account = serverData.getAccount(publicKey);
         if (account == null){
             serverData.openAccount(publicKey);
@@ -127,6 +127,9 @@ public class ServerSide {
     }
 
     private String sendAmount(String sender, String receiver, int amount) {
+        if (!sender.equals(KeyConversion.keyToString(channel.getPublicKey()))){
+            return "Unauthorized Operation. Can only send money from accounts with Public Key associated to yours.";
+        }
         return serverData.sendAmount(sender, receiver, amount);
     }
 
@@ -142,6 +145,9 @@ public class ServerSide {
     }
 
     private String receiveAmount(String senderKey, String receiverKey){
+        if (!receiverKey.equals(KeyConversion.keyToString(channel.getPublicKey()))){
+            return "Unauthorized Operation. Can only accept money to an account with Public Key associated to yours.";
+        }
         return serverData.receiveAmount(senderKey, receiverKey);
     }
 

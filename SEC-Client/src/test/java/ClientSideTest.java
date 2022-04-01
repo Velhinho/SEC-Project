@@ -16,27 +16,40 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class ClientSideTest {
 
+    // Server
+    static final PublicKey serverPublicKey = KeyConversion.stringToKey("MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDR5XF" +
+                                                                       "Qum9i0YS5clSPUpc4tVsd/fr383tXqhEu3+vYAi0ORqFQ/7h6ZlSH66xO6etg9Z1reyjsSo81t9rt1jg8Jo3JGhDf053e" +
+                                                                       "8KDXr9HJgqLSZPi1VJtlvJV4jZ4xBdKtsG0A95XA/CeA3JaQB8ZmV5mY8qj/SRIWanS4JT7kzQIDAQAB");
+
+
+    // Client 1
     static Socket socket;
     static SignedChannel channel;
     static ClientSide clientSide;
     static KeyPair keyPair;
     static PublicKey publicKey;
     static PrivateKey privateKey;
+
+    // Client 2
     static Socket socket2;
     static SignedChannel channel2;
     static ClientSide clientSide2;
     static KeyPair keyPair2;
     static PublicKey publicKey2;
     static PrivateKey privateKey2;
-    static final PublicKey serverPublicKey = KeyConversion.stringToKey("MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDR5XF" +
-                                                                       "Qum9i0YS5clSPUpc4tVsd/fr383tXqhEu3+vYAi0ORqFQ/7h6ZlSH66xO6etg9Z1reyjsSo81t9rt1jg8Jo3JGhDf053e" +
-                                                                       "8KDXr9HJgqLSZPi1VJtlvJV4jZ4xBdKtsG0A95XA/CeA3JaQB8ZmV5mY8qj/SRIWanS4JT7kzQIDAQAB");
+
+    // Client 3
+    static Socket socket3;
+    static SignedChannel channel3;
+    static ClientSide clientSide3;
+    static KeyPair keyPair3;
     static PublicKey publicKey3;
+    static PrivateKey privateKey3;
 
 
     @BeforeAll
     static void setupTests() throws Exception{
-        /*Generate New Keys for Test*/
+        /*Generate Cryptographic Stuff for Tests*/
         KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance("RSA");
         KeyPairGenerator keyPairGen2 = KeyPairGenerator.getInstance("RSA");
         KeyPairGenerator keyPairGen3 = KeyPairGenerator.getInstance("RSA");
@@ -45,22 +58,29 @@ class ClientSideTest {
         keyPairGen3.initialize(2048);
         keyPair = keyPairGen.generateKeyPair();
         keyPair2 = keyPairGen2.generateKeyPair();
+        keyPair3 =  keyPairGen3.generateKeyPair();
         publicKey = keyPair.getPublic();
         publicKey2 = keyPair2.getPublic();
         privateKey = keyPair.getPrivate();
         privateKey2 = keyPair2.getPrivate();
-        publicKey3 = keyPairGen3.generateKeyPair().getPublic();
+        publicKey3 = keyPair3.getPublic();
+        privateKey3 = keyPair3.getPrivate();
+
         /* Generates the socket, channel and clientSide */
         socket = new Socket("localhost", 8080);
         socket2 = new Socket("localhost", 8080);
+        socket3 = new Socket("localhost", 8080);
         channel = new SignedChannel(socket, serverPublicKey, privateKey);
         channel2 = new SignedChannel(socket2, serverPublicKey, privateKey2);
+        channel3 = new SignedChannel(socket3, serverPublicKey, privateKey3);
         clientSide = new ClientSide(channel, publicKey);
         clientSide2 = new ClientSide(channel2, publicKey2);
-        System.out.println(publicKey);
+        clientSide3 = new ClientSide(channel3, publicKey3);
+
         /* Sends Public Keys */
         clientSide.sendPublicKey();
         clientSide2.sendPublicKey();
+        clientSide3.sendPublicKey();
     }
 
     //OpenAccounts Test
@@ -95,7 +115,7 @@ class ClientSideTest {
     @Test
     @Order(5)
     void SendAmountSenderDoesNotExist() throws Exception {
-        assertEquals("The sender account doesn't exist!", clientSide.sendAmountRequest(publicKey3, publicKey2, 5));
+        assertEquals("The sender account doesn't exist!", clientSide3.sendAmountRequest(publicKey3, publicKey, 5));
     }
 
     @Test
@@ -163,25 +183,25 @@ class ClientSideTest {
     @Test
     @Order(12)
     void ReceiveAmountSenderDoesNotExist() throws Exception {
-        assertEquals("The sender account doesn't exist!", clientSide.receiveAmountRequest(publicKey3, publicKey2));
+        assertEquals("The sender account doesn't exist!", clientSide2.receiveAmountRequest(publicKey3, publicKey2));
     }
 
     @Test
     @Order(13)
     void ReceiveAmountReceiverDoesNotExist() throws Exception {
-        assertEquals("The receiver account doesn't exist!", clientSide.receiveAmountRequest(publicKey, publicKey3));
+        assertEquals("The receiver account doesn't exist!", clientSide3.receiveAmountRequest(publicKey, publicKey3));
     }
 
     @Test
     @Order(14)
     void ReceiveAmountClient1Client2() throws Exception {
-        assertEquals("Transfer receive with success!", clientSide.receiveAmountRequest(publicKey2, publicKey));
+        assertEquals("Transfer received with success!", clientSide.receiveAmountRequest(publicKey2, publicKey));
     }
 
     @Test
     @Order(15)
     void ReceiveAmountClient2Client1() throws Exception {
-        assertEquals("Transfer receive with success!", clientSide2.receiveAmountRequest(publicKey, publicKey2));
+        assertEquals("Transfer received with success!", clientSide2.receiveAmountRequest(publicKey, publicKey2));
     }
 
     //Audit Tests
@@ -221,10 +241,48 @@ class ClientSideTest {
                      "amount=" + 5 + ']' + ']',clientSide.audit(publicKey2));
     }
 
+    // Authorization Tests
+    @Test
+    @Order(19)
+    void OpenAnAccountWithAnotherPublicKey() throws Exception{
+        assertEquals("Unauthorized Operation. Can only create an account with your Public Key", clientSide.openAccount(publicKey3));
+    }
+
+    @Test
+    @Order(20)
+    void openAnAccountWithRightPublicKey() throws Exception {
+        assertEquals("Account Opened With Success!",clientSide3.openAccount(publicKey3));
+    }
+
+    @Test
+    @Order(21)
+    void sendAmountWithAnotherPublicKey() throws Exception {
+        assertEquals("Unauthorized Operation. Can only send money from accounts with Public Key associated to yours.", clientSide.sendAmountRequest(publicKey3, publicKey, 5));
+    }
+
+    @Test
+    @Order(22)
+    void sendAmountWithRightPublicKey() throws Exception {
+        assertEquals("Transfer made with success.", clientSide3.sendAmountRequest(publicKey3, publicKey, 5));
+    }
+
+    @Test
+    @Order(23)
+    void receiveAmountWithAnotherPublicKey() throws Exception{
+        assertEquals("Unauthorized Operation. Can only accept money to an account with Public Key associated to yours.", clientSide3.receiveAmountRequest(publicKey3, publicKey));
+    }
+
+    @Test
+    @Order(24)
+    void receiveAmountWithRightPublicKey() throws Exception{
+        assertEquals("Transfer received with success!", clientSide.receiveAmountRequest(publicKey3, publicKey));
+    }
+
     @AfterAll
     static void closeStuff() throws Exception {
         clientSide.getChannel().closeSocket();
         clientSide2.getChannel().closeSocket();
+        clientSide3.getChannel().closeSocket();
     }
 
 }

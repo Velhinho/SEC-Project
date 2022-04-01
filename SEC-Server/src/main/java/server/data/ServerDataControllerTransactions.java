@@ -233,7 +233,7 @@ public class ServerDataControllerTransactions {
                 System.exit(0);
             }
         }
-        return "Transfer receive with success!";
+        return "Transfer received with success!";
     }
 
 }
