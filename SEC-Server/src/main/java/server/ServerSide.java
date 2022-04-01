@@ -37,7 +37,7 @@ public class ServerSide {
         var reader = new BufferedReader(new InputStreamReader(channel.getSocket().getInputStream()));
         var publicKey = reader.readLine();
         channel.setPublicKey(KeyConversion.stringToKey(publicKey));
-        String response = "Key Passed With Sucess";
+        String response = "Key Passed With Success";
         var signature = StringSignature.sign(response, channel.getPrivateKey());
         var writer = new PrintWriter(channel.getSocket().getOutputStream());
         writer.println(signature);

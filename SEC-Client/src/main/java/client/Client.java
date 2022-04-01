@@ -42,6 +42,7 @@ public class Client {
             var channel = new SignedChannel(socket, serverPublicKey, keyPair.getPrivate());
             var clientSide = new ClientSide(channel, keyPair.getPublic());
 
+
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 public void run(){
                     try {
@@ -53,7 +54,9 @@ public class Client {
                 }
             });
 
+
             if(clientSide.sendPublicKey()) {
+                System.out.println("SHID");
                 while (true) {
                     System.out.println("Enter command");
                     CommandParser.parseCommand(clientSide);

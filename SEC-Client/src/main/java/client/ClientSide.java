@@ -39,6 +39,7 @@ public class ClientSide {
         writer.flush();
         var reader = new BufferedReader(new InputStreamReader(channel.getSocket().getInputStream()));
         var response = reader.readLine();
+        System.out.println(response);
         return StringSignature.verify("Key Passed With Success", response, channel.getPublicKey());
     }
 

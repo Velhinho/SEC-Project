@@ -23,7 +23,7 @@ public class Server {
             var serverSide = new ServerSide(channel);
             serverSide.receiveClientPublicKey();
             System.out.println(serverSide.getChannel().getPublicKey());
-            while (!channel.getSocket().isClosed()) {
+            while (true) {
                 serverSide.processRequest();
             }
         } catch (RuntimeException | ChannelException | IOException | CryptoException e) {
