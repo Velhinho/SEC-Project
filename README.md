@@ -2,6 +2,7 @@
 
 ## Instructions
 * To run this project download the source code
+* Make sure you have sqlite3 installed. You can install the latest version with ``sudo apt-get install sqlite3``
 * Then do ``mvn install`` in the SEC-Project directory 
 * And then do ``mvn install`` in the SEC-Communication directory
 * To start the server go to the SEC-Server directory and do ``mvn compile exec:java``
