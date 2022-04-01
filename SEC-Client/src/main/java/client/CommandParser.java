@@ -70,7 +70,6 @@ public class CommandParser {
 
         var reader = new BufferedReader(new InputStreamReader(System.in));
         var line = reader.readLine();
-        System.out.println("line is " + line);
         var command = open(line)
                 .or(() -> check(line))
                 .or(() -> send(line))

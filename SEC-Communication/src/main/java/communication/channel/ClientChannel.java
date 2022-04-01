@@ -20,6 +20,15 @@ import java.util.Objects;
 public class ClientChannel implements Channel {
     private final Socket socket;
     private final PrivateKey privateKey;
+    private long nonce;
+
+    public long getNonce() {
+        return nonce;
+    }
+
+    public void setNonce(long nonce) {
+        this.nonce = nonce;
+    }
 
     public Socket getSocket() {
         return socket;
@@ -45,27 +54,6 @@ public class ClientChannel implements Channel {
         return Long.parseLong(nonce);
     }
 
-    private long giveNonce() throws ChannelException {
-        try {
-            var reader = new BufferedReader(new InputStreamReader(getSocket().getInputStream()));
-            var line = reader.readLine();
-            System.out.println("Waiting for nonce request");
-            if (Objects.equals(line, "nonce pls")) {
-                var rng = SecureRandom.getInstance("SHA1PRNG");
-                var writer = new PrintWriter(getSocket().getOutputStream());
-                var nonce = rng.nextLong();
-                writer.println(nonce);
-                writer.flush();
-                System.out.println("Gave nonce");
-                return nonce;
-            } else {
-                throw new ChannelException("Didn't ask for nonce");
-            }
-        } catch (IOException | NoSuchAlgorithmException exception) {
-            throw new ChannelException(exception.getMessage());
-        }
-    }
-
     private JsonObject appendNonce(JsonObject jsonObject, long nonce) {
         var newJson = new JsonObject();
         newJson.addProperty("nonce", nonce);
@@ -83,8 +71,8 @@ public class ClientChannel implements Channel {
     @Override
     public void sendMessage(JsonObject jsonObject) throws ChannelException {
         try {
-            var nonce = askNonce();
-            var jsonWithNonce = appendNonce(jsonObject, nonce);
+            setNonce(askNonce());
+            var jsonWithNonce = appendNonce(jsonObject, getNonce());
             var signature = StringSignature.sign(jsonWithNonce.toString(), getPrivateKey());
             var message = appendSignature(jsonWithNonce, signature);
 
@@ -127,12 +115,11 @@ public class ClientChannel implements Channel {
     @Override
     public JsonObject receiveMessage() throws ChannelException {
         try {
-            var givenNonce = giveNonce();
             var reader = new BufferedReader(new InputStreamReader(getSocket().getInputStream()));
             var message = JsonParser.parseString(reader.readLine()).getAsJsonObject();
             System.out.println("message: " + message + "\n");
             var jsonWithNonce = unpackSignature(message);
-            return unpackNonce(jsonWithNonce, givenNonce);
+            return unpackNonce(jsonWithNonce, getNonce());
         } catch (IOException | CryptoException exception) {
             throw new ChannelException(exception.getMessage());
         }

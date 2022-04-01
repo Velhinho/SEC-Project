@@ -4,33 +4,27 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import communication.channel.ChannelException;
-import communication.channel.SignedChannel;
-import communication.crypto.CryptoException;
+import communication.channel.ServerChannel;
 import communication.crypto.KeyConversion;
-import communication.crypto.StringSignature;
 import communication.messages.*;
 //import server.data.ServerData;
 import server.data.Account;
 import server.data.ServerDataControllerTransactions;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.security.KeyPair;
 import java.util.*;
 
 public class ServerSide {
-    private final SignedChannel channel;
+    private final ServerChannel channel;
     private final KeyPair keyPair;
     //private static ServerDataController serverData = new ServerDataController();
     private static ServerDataControllerTransactions serverData = new ServerDataControllerTransactions();
 
-    public SignedChannel getChannel() {
+    public ServerChannel getChannel() {
         return channel;
     }
 
-    public ServerSide(SignedChannel channel, KeyPair keyPair) {
+    public ServerSide(ServerChannel channel, KeyPair keyPair) {
         this.channel = channel;
         this.keyPair = keyPair;
     }

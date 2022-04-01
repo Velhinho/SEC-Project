@@ -2,8 +2,7 @@ package server;
 
 
 import communication.channel.ChannelException;
-import communication.channel.SignedChannel;
-import communication.crypto.CryptoException;
+import communication.channel.ServerChannel;
 import communication.crypto.KeyConversion;
 
 import java.io.IOException;
@@ -19,7 +18,7 @@ import java.util.concurrent.Executors;
 public class Server {
     private static void serveClient(Socket client, KeyPair keyPair) throws RuntimeException {
         try (client) {
-            var channel = new SignedChannel(client, keyPair.getPrivate());
+            var channel = new ServerChannel(client, keyPair.getPrivate());
             var serverSide = new ServerSide(channel, keyPair);
             serverSide.processRequest();
         } catch (RuntimeException | ChannelException | IOException e) {
