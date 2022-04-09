@@ -234,7 +234,7 @@ class ClientSideTest {
                      "sender=" + KeyConversion.keyToString(publicKey2) + ", " +
                      "receiver=" + KeyConversion.keyToString(publicKey) + ", " +
                      "amount=" + 5 + ']' + ']'
-                     , clientSide.audit(publicKey2));
+                     , clientSide2.audit(publicKey));
     }
 
     @Test
@@ -248,7 +248,8 @@ class ClientSideTest {
                      " Transfer[" +
                      "sender=" + KeyConversion.keyToString(publicKey2) + ", " +
                      "receiver=" + KeyConversion.keyToString(publicKey) + ", " +
-                     "amount=" + 5 + ']' + ']',clientSide.audit(publicKey2));
+                     "amount=" + 5 + ']' + ']'
+                     , clientSide.audit(publicKey2));
     }
 
 }

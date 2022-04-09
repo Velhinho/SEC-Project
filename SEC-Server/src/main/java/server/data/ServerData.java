@@ -12,10 +12,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 
-public class ServerDataControllerTransactions {
+public class ServerData {
     private Connection c = null;
 
-    public ServerDataControllerTransactions(){
+    public ServerData(){
         connectToDatabase();
     }
 
@@ -34,12 +34,12 @@ public class ServerDataControllerTransactions {
 
 
     public void openAccount(String publicKey){
-        Statement stmnt = null;
+        PreparedStatement pstmt = null;
         try {
-            stmnt = c.createStatement();
-            String sql = "INSERT INTO accounts (public_key, balance) " +
-                    "VALUES (\"" +  publicKey + "\", 10);";
-            stmnt.executeUpdate(sql);
+            pstmt = c.prepareStatement("INSERT INTO accounts (public_key, balance) VALUES (?,?)");
+            pstmt.setString(1, publicKey);
+            pstmt.setInt(2, 10);
+            pstmt.executeUpdate();
             c.commit();
         }catch (SQLException e){
             try{
@@ -52,8 +52,8 @@ public class ServerDataControllerTransactions {
         }
         finally {
             try {
-                if (stmnt != null){
-                    stmnt.close();
+                if (pstmt != null){
+                    pstmt.close();
                 }
             }
             catch (SQLException e){
@@ -65,7 +65,12 @@ public class ServerDataControllerTransactions {
     }
 
     public String sendAmount(String sender, String receiver, int amount){
-
+        if (sender.equals(receiver)) {
+            return "Can't send money to itself!";
+        }
+        if (amount <= 0) {
+            return "The amount of money sent needs to be higher than zero!";
+        }
         Date timestamp = new Date(System.currentTimeMillis());
         String timestamp_string = Transfer.DateToString(timestamp);
         Account senderAccount = getAccount(sender);
@@ -81,16 +86,24 @@ public class ServerDataControllerTransactions {
         if (receiverAccount == null){
             return "The receiver account doesn't exist!";
         }
-        Statement stmt = null;
+        PreparedStatement pstmt = null;
         try{
-            stmt = c.createStatement();
-            String sql = "INSERT INTO transfers (source_key, receiver_key, amount, pending, timestamp) " +
-                    "VALUES (\"" +  sender + "\",\"" + receiver + "\"," + amount +"," + 1 + ",\"" + timestamp_string +  "\");";
-            stmt.executeUpdate(sql);
-            stmt.close();
-            stmt = c.createStatement();
-            sql = "UPDATE accounts set balance = " + senderAccount.balance() + " where public_key = \"" + sender + "\";";
-            stmt.executeUpdate(sql);
+            String sql_insert = "INSERT INTO transfers (source_key, receiver_key, amount, pending, timestamp) VALUES (?, ?, ?, ?, ?);";
+            pstmt = c.prepareStatement(sql_insert);
+            pstmt.setString(1, sender);
+            pstmt.setString(2, receiver);
+            pstmt.setInt(3, amount);
+            pstmt.setInt(4, 1);
+            pstmt.setString(5,timestamp_string);
+            pstmt.executeUpdate();
+            pstmt.close();
+
+            String sql_update = "UPDATE accounts set balance = ? where public_key = ? ;";
+            pstmt = c.prepareStatement(sql_update);
+            pstmt.setInt(1, senderAccount.balance());
+            pstmt.setString(2, sender);
+            pstmt.executeUpdate();
+            pstmt.close();
             c.commit();
         } catch (SQLException e){
             try{
@@ -102,8 +115,8 @@ public class ServerDataControllerTransactions {
             }
         } finally {
             try {
-                if (stmt != null){
-                    stmt.close();
+                if (pstmt != null){
+                    pstmt.close();
                 }
             }
             catch (SQLException e){
@@ -117,20 +130,26 @@ public class ServerDataControllerTransactions {
     public Account getAccount(String publicKey){
         Account account = null;
         Transfer transfer = null;
-        Statement stmt1 = null;
-        Statement stmt2 = null;
+        PreparedStatement pstmt1 = null;
+        PreparedStatement pstmt2 = null;
+        String sql_accounts;
+        String sql_transfers;
         ResultSet rs1 = null;
         ResultSet rs2 = null;
         try {
-            stmt1 = c.createStatement();
-            rs1 = stmt1.executeQuery("SELECT * FROM accounts WHERE public_key = \"" + publicKey + "\";");
+            sql_accounts = "SELECT * FROM accounts WHERE public_key = ? ;";
+            pstmt1 = c.prepareStatement(sql_accounts);
+            pstmt1.setString(1, publicKey);
+            rs1 = pstmt1.executeQuery();
             while (rs1.next()) {
                 account = new Account(rs1.getString("public_key"), rs1.getInt("balance"));
             }
-            stmt2 = c.createStatement();
-            rs2 = stmt2.executeQuery("SELECT * FROM transfers WHERE source_key = \"" + publicKey + "\" OR receiver_key = \"" + publicKey + "\";");
+            sql_transfers = "SELECT * FROM transfers WHERE source_key = ? OR receiver_key = ? ;";
+            pstmt2 = c.prepareStatement(sql_transfers);
+            pstmt2.setString(1, publicKey);
+            pstmt2.setString(2, publicKey);
+            rs2 = pstmt2.executeQuery();
             while ( rs2.next() ){
-                int transfer_id = rs2.getInt("transfer_id");
                 String source_key = rs2.getString("source_key");
                 String receiver_key = rs2.getString("receiver_key");
                 int amount = rs2.getInt("amount");
@@ -156,11 +175,11 @@ public class ServerDataControllerTransactions {
         }
         finally {
             try {
-                if (stmt1 != null){
-                    stmt1.close();
+                if (pstmt1 != null){
+                    pstmt1.close();
                 }
-                if (stmt2 != null){
-                    stmt2.close();
+                if (pstmt2 != null){
+                    pstmt2.close();
                 }
                 if (rs1 != null){
                     rs1.close();
@@ -178,6 +197,9 @@ public class ServerDataControllerTransactions {
     }
 
     public String receiveAmount(String sender, String receiver) {
+        if (sender.equals(receiver)) {
+            return "You can't accept a transfer from yourself to yourself!";
+        }
         Account senderAccount = getAccount(sender);
         if (senderAccount == null){
             return "The sender account doesn't exist!";
@@ -197,21 +219,38 @@ public class ServerDataControllerTransactions {
         }
         PendingTransfer pendingTransfer = transfers.get(0);
         receiverAccount.changingBalance(pendingTransfer.transfer().amount());
-        Statement stmt1 = null;
-        Statement stmt2 = null;
+        PreparedStatement pstmt1 = null;
+        PreparedStatement pstmt2 = null;
+        String sql_balance;
+        String sql_transfers;
         try{
-            stmt1 = c.createStatement();
-            String sql = "UPDATE accounts set balance = " + receiverAccount.balance() + " where public_key = \"" + receiver + "\";";
-            stmt1.executeUpdate(sql);
-            stmt2 = c.createStatement();
-            sql = "UPDATE transfers set pending = " + 0 +
-                    " where source_key = \"" + sender +
-                    "\" and receiver_key = \"" + receiver +
-                    "\" and timestamp = \"" + Transfer.DateToString(pendingTransfer.transfer().getTimestamp()) + "\";";
-            stmt2.executeUpdate(sql);
+
+            sql_balance = "UPDATE accounts SET balance = ? WHERE public_key = ? ;";
+            pstmt1 = c.prepareStatement(sql_balance);
+            pstmt1.setInt(1, receiverAccount.balance());
+            pstmt1.setString(2, receiver);
+            pstmt1.executeUpdate();
+
+            System.out.println(receiverAccount.balance());
+            System.out.println(receiver);
+
+            sql_transfers = "UPDATE transfers SET pending = ? WHERE source_key = ? AND receiver_key = ? AND timestamp = ? ;";
+            pstmt2 = c.prepareStatement(sql_transfers);
+            pstmt2.setInt(1, 0);
+            pstmt2.setString(2, sender);
+            pstmt2.setString(3, receiver);
+            pstmt2.setString(4, Transfer.DateToString(pendingTransfer.transfer().getTimestamp()));
+            pstmt2.executeUpdate();
+
+            System.out.println(sender);
+            System.out.println(receiver);
+            System.out.println(Transfer.DateToString(pendingTransfer.transfer().getTimestamp()));
+
             c.commit();
         }catch (SQLException e){
             try{
+                System.out.println("Rollback was done!");
+                System.out.println(e.getMessage());
                 c.rollback();
             }
             catch (SQLException e2){
@@ -221,11 +260,11 @@ public class ServerDataControllerTransactions {
         }
         finally {
             try {
-                if (stmt1 != null){
-                    stmt1.close();
+                if (pstmt1 != null){
+                    pstmt1.close();
                 }
-                if (stmt2 != null){
-                    stmt2.close();
+                if (pstmt2 != null){
+                    pstmt2.close();
                 }
             }
             catch (SQLException e){

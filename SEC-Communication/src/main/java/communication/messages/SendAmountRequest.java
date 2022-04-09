@@ -29,6 +29,8 @@ public class SendAmountRequest {
         return sender;
     }
 
+    public String getKey() { return key; }
+
     @Override
     public String toString() {
         return "SendAmountRequest{" +

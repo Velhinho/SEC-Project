@@ -22,4 +22,6 @@ public class ReceiveAmountRequest {
     public String getReceiver() {
         return receiver;
     }
+
+    public String getKey() { return key; }
 }

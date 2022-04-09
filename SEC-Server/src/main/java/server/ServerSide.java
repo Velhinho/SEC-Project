@@ -9,7 +9,7 @@ import communication.crypto.KeyConversion;
 import communication.messages.*;
 //import server.data.ServerData;
 import server.data.Account;
-import server.data.ServerDataControllerTransactions;
+import server.data.ServerData;
 
 import java.security.KeyPair;
 import java.util.*;
@@ -18,7 +18,7 @@ public class ServerSide {
     private final ServerChannel channel;
     private final KeyPair keyPair;
     //private static ServerDataController serverData = new ServerDataController();
-    private static ServerDataControllerTransactions serverData = new ServerDataControllerTransactions();
+    private static ServerData serverData = new ServerData();
 
     public ServerChannel getChannel() {
         return channel;
@@ -71,7 +71,7 @@ public class ServerSide {
             var request = gson.fromJson(requestJson.get("request"), SendAmountRequest.class);
             System.out.println("SendAmount: " + request);
 
-            var stringResponse = sendAmount(request.getSender(), request.getReceiver(), request.getAmount());
+            var stringResponse = sendAmount(request.getSender(), request.getReceiver(), request.getAmount(), request.getKey());
             var responseJson = makeResponse(stringResponse);
             getChannel().sendMessage(responseJson);
 
@@ -79,7 +79,7 @@ public class ServerSide {
             var request = gson.fromJson(requestJson.get("request"), ReceiveAmountRequest.class);
             System.out.println("receiveAmount: " + request);
 
-            var stringResponse =  receiveAmount(request.getSender(), request.getReceiver());
+            var stringResponse =  receiveAmount(request.getSender(), request.getReceiver(), request.getKey());
             var responseJson = makeResponse(stringResponse);
             getChannel().sendMessage(responseJson);
         }
@@ -109,7 +109,10 @@ public class ServerSide {
         return "Account with public key = " + publicKey + " does not exist";
     }
 
-    private String sendAmount(String sender, String receiver, int amount) {
+    private String sendAmount(String sender, String receiver, int amount, String key) {
+        if (!key.equals(sender)){
+            return "The signature of the request and the sender's key doesn't match!";
+        }
         return serverData.sendAmount(sender, receiver, amount);
     }
 
@@ -124,7 +127,10 @@ public class ServerSide {
         return "Account with public key = " + publicKey + " does not exist";
     }
 
-    private String receiveAmount(String senderKey, String receiverKey){
+    private String receiveAmount(String senderKey, String receiverKey, String key){
+        if (!key.equals(receiverKey)){
+            return "The signature of the request and the receiver's key doesn't match!";
+        }
         return serverData.receiveAmount(senderKey, receiverKey);
     }
 
