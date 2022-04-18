@@ -1,9 +1,5 @@
 package server.data;
 
-import communication.messages.PendingTransfer;
-import communication.messages.Transfer;
-
-import java.io.IOException;
 import java.sql.*;
 import java.util.Collections;
 import java.util.Comparator;
@@ -36,9 +32,10 @@ public class ServerData {
     public void openAccount(String publicKey){
         PreparedStatement pstmt = null;
         try {
-            pstmt = c.prepareStatement("INSERT INTO accounts (public_key, balance) VALUES (?,?)");
+            pstmt = c.prepareStatement("INSERT INTO accounts (public_key, balance) VALUES (?,?,?)");
             pstmt.setString(1, publicKey);
             pstmt.setInt(2, 10);
+            pstmt.setInt(3, 0);
             pstmt.executeUpdate();
             c.commit();
         }catch (SQLException e){
@@ -142,7 +139,7 @@ public class ServerData {
             pstmt1.setString(1, publicKey);
             rs1 = pstmt1.executeQuery();
             while (rs1.next()) {
-                account = new Account(rs1.getString("public_key"), rs1.getInt("balance"));
+                account = new Account(rs1.getString("public_key"), rs1.getInt("balance"), rs1.getInt("ts"));
             }
             sql_transfers = "SELECT * FROM transfers WHERE source_key = ? OR receiver_key = ? ;";
             pstmt2 = c.prepareStatement(sql_transfers);
