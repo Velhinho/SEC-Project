@@ -48,7 +48,13 @@ public class Server {
         var keyPair = getKeyPair(args[0], args[1]);
         System.out.println(KeyConversion.keyToString(keyPair.getPublic()));
 
-        try (ServerSocket serverSocket = new ServerSocket(8080)) {
+        int port = 8080;
+
+        if(args.length >= 3){
+            port = 8079 + Integer.parseInt(args[2]);
+        }
+
+        try (ServerSocket serverSocket = new ServerSocket(port)) {
             while (true) {
                 System.out.println("Waiting for client");
                 var client = serverSocket.accept();
