@@ -32,7 +32,7 @@ public class ServerData {
     public void openAccount(String publicKey){
         PreparedStatement pstmt = null;
         try {
-            pstmt = c.prepareStatement("INSERT INTO accounts (public_key, balance) VALUES (?,?,?)");
+            pstmt = c.prepareStatement("INSERT INTO accounts (public_key, balance, ts) VALUES (?,?,?)");
             pstmt.setString(1, publicKey);
             pstmt.setInt(2, 10);
             pstmt.setInt(3, 0);
