@@ -32,8 +32,8 @@ public class ClientSide {
         return requestJson;
     }
 
-    public String openAccount(PublicKey publicKey) throws Exception {
-        var request = new OpenAccountRequest(publicKey);
+    public String openAccount(PublicKey publicKey, long wts) throws Exception {
+        var request = new OpenAccountRequest(publicKey, wts);
         var requestJson = makeRequest("openAccount", request);
         getChannel().sendMessage(requestJson);
 
@@ -44,8 +44,8 @@ public class ClientSide {
         return (String) response;
     }
 
-    public String sendAmountRequest(PublicKey sender, PublicKey receiver, int ammount) throws Exception {
-        var request = new SendAmountRequest(sender, receiver, ammount);
+    public String sendAmountRequest(PublicKey sender, PublicKey receiver, int ammount, long wts) throws Exception {
+        var request = new SendAmountRequest(sender, receiver, ammount, wts);
         var requestJson = makeRequest("sendAmount", request);
         getChannel().sendMessage(requestJson);
 

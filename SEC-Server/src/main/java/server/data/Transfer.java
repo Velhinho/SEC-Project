@@ -1,4 +1,4 @@
-package communication.messages;
+package server.data;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

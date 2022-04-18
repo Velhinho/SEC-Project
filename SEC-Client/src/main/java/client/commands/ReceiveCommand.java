@@ -50,4 +50,8 @@ public final class ReceiveCommand implements Command {
                 "receiver=" + receiver + ']';
     }
 
+    public String getType(){
+        return "Write";
+    }
+
 }

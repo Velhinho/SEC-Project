@@ -63,6 +63,7 @@
                         <argument>fixolas</argument>
                         <argument>${clientNumber}</argument>
                         <argument>${badChannel}</argument>
+                        <argument>${numberOfReplicas}</argument>
                     </arguments>
                 </configuration>
             </plugin>

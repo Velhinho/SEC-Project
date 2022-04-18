@@ -41,4 +41,8 @@ public final class CheckCommand implements Command {
                 "keyString=" + keyString + ']';
     }
 
+    public String getType(){
+        return "Read";
+    }
+
 }

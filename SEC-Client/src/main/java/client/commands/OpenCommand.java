@@ -42,4 +42,8 @@ public final class OpenCommand implements Command {
                 "keyString=" + keyString + ']';
     }
 
+    public String getType(){
+        return "Write";
+    }
+
 }

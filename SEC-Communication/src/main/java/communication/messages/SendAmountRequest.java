@@ -5,16 +5,19 @@ import communication.crypto.KeyConversion;
 import java.security.PublicKey;
 
 public class SendAmountRequest {
-    private String key;
-    private String sender;
-    private String receiver;
+    private final String key;
+    private final String sender;
+    private final String receiver;
     private int amount;
+    private final long wts;
 
-    public SendAmountRequest(PublicKey sender, PublicKey receiver, int amount){
+
+    public SendAmountRequest(PublicKey sender, PublicKey receiver, int amount, long wts){
         this.sender = KeyConversion.keyToString(sender);
         this.receiver = KeyConversion.keyToString(receiver);
         this.amount = amount;
         this.key = this.sender;
+        this.wts = wts;
     }
 
     public int getAmount() {
@@ -38,5 +41,9 @@ public class SendAmountRequest {
                 ", receiver='" + receiver + '\'' +
                 ", amount=" + amount +
                 '}';
+    }
+
+    public long getWts() {
+        return wts;
     }
 }

@@ -8,10 +8,12 @@ import java.util.Objects;
 public final class CheckAccountRequest {
     private final String key;
     private final String checkKey;
+    private final long rid;
 
-    public CheckAccountRequest(PublicKey key, PublicKey checkKey) {
+    public CheckAccountRequest(PublicKey key, PublicKey checkKey, long rid) {
         this.key = KeyConversion.keyToString(key);
         this.checkKey = KeyConversion.keyToString(checkKey);
+        this.rid =  rid;
     }
 
     public String key() {
@@ -41,5 +43,7 @@ public final class CheckAccountRequest {
                 "key=" + key + ']';
     }
 
-
+    public long getRid() {
+        return rid;
+    }
 }

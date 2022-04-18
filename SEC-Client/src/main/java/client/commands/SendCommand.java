@@ -58,4 +58,8 @@ public final class SendCommand implements Command {
                 "amount=" + amount + ']';
     }
 
+    public String getType(){
+        return "Write";
+    }
+
 }

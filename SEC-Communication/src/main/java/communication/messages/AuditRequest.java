@@ -8,10 +8,12 @@ import java.util.Objects;
 public final class AuditRequest {
     private final String key;
     private final String auditKey;
+    private final long rid;
 
-    public AuditRequest(PublicKey key, PublicKey auditKey) {
+    public AuditRequest(PublicKey key, PublicKey auditKey, long rid) {
         this.key = KeyConversion.keyToString(key);
         this.auditKey = KeyConversion.keyToString(auditKey);
+        this.rid = rid;
     }
 
     public String key() {
@@ -41,4 +43,7 @@ public final class AuditRequest {
                 "key=" + key + ']';
     }
 
+    public long getRid() {
+        return rid;
+    }
 }

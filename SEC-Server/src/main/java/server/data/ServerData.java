@@ -1,9 +1,5 @@
 package server.data;
 
-import communication.messages.PendingTransfer;
-import communication.messages.Transfer;
-
-import java.io.IOException;
 import java.sql.*;
 import java.util.Collections;
 import java.util.Comparator;
@@ -14,16 +10,18 @@ import java.util.stream.Collectors;
 
 public class ServerData {
     private Connection c = null;
+    private final int replicaNumber;
 
-    public ServerData(){
-        connectToDatabase();
+    public ServerData(int replicaNumber){
+        this.replicaNumber = replicaNumber;
+        connectToDatabase(replicaNumber);
     }
 
     // Sets connection to Database to autoCommit as false to allow for transactional behaviour
-    public void connectToDatabase(){
+    public void connectToDatabase(int replicaNumber){
         try {
             Class.forName("org.sqlite.JDBC");
-            c = DriverManager.getConnection("jdbc:sqlite:SEC.db");
+            c = DriverManager.getConnection("jdbc:sqlite:SEC" + replicaNumber + ".db");
             c.setAutoCommit(false);
         } catch ( Exception e ) {
             System.err.println( e.getClass().getName() + ": " + e.getMessage() );
@@ -36,9 +34,10 @@ public class ServerData {
     public void openAccount(String publicKey){
         PreparedStatement pstmt = null;
         try {
-            pstmt = c.prepareStatement("INSERT INTO accounts (public_key, balance) VALUES (?,?)");
+            pstmt = c.prepareStatement("INSERT INTO accounts (public_key, balance, ts) VALUES (?,?,?)");
             pstmt.setString(1, publicKey);
             pstmt.setInt(2, 10);
+            pstmt.setInt(3, 0);
             pstmt.executeUpdate();
             c.commit();
         }catch (SQLException e){
@@ -105,6 +104,15 @@ public class ServerData {
             pstmt.executeUpdate();
             pstmt.close();
             c.commit();
+
+            String sql_updateTs = "UPDATE accounts set ts = ? where public_key = ? ;";
+            pstmt= c.prepareStatement(sql_updateTs);
+            pstmt.setInt(1, senderAccount.getTs() + 1);
+            pstmt.setString(2, sender);
+            pstmt.executeUpdate();
+            pstmt.close();
+            c.commit();
+
         } catch (SQLException e){
             try{
                 c.rollback();
@@ -142,7 +150,7 @@ public class ServerData {
             pstmt1.setString(1, publicKey);
             rs1 = pstmt1.executeQuery();
             while (rs1.next()) {
-                account = new Account(rs1.getString("public_key"), rs1.getInt("balance"));
+                account = new Account(rs1.getString("public_key"), rs1.getInt("balance"), rs1.getInt("ts"));
             }
             sql_transfers = "SELECT * FROM transfers WHERE source_key = ? OR receiver_key = ? ;";
             pstmt2 = c.prepareStatement(sql_transfers);
@@ -221,6 +229,7 @@ public class ServerData {
         receiverAccount.changingBalance(pendingTransfer.transfer().amount());
         PreparedStatement pstmt1 = null;
         PreparedStatement pstmt2 = null;
+        PreparedStatement pstmt3 = null;
         String sql_balance;
         String sql_transfers;
         try{
@@ -245,6 +254,13 @@ public class ServerData {
             System.out.println(sender);
             System.out.println(receiver);
             System.out.println(Transfer.DateToString(pendingTransfer.transfer().getTimestamp()));
+
+            String sql_updateTs = "UPDATE accounts set ts = ? where public_key = ? ;";
+            pstmt3= c.prepareStatement(sql_updateTs);
+            pstmt3.setInt(1, receiverAccount.getTs() + 1);
+            pstmt3.setString(2, receiver);
+            pstmt3.executeUpdate();
+            pstmt3.close();
 
             c.commit();
         }catch (SQLException e){
@@ -273,6 +289,27 @@ public class ServerData {
             }
         }
         return "Transfer received with success!";
+    }
+
+    public void saveOperation(String operation){
+        PreparedStatement pstmt = null;
+        String sql_operation = null;
+        try {
+            sql_operation = "INSERT INTO operations (signature) VALUES (?);";
+            pstmt = c.prepareStatement(sql_operation);
+            pstmt.setString(1, operation);
+            pstmt.executeUpdate();
+            c.commit();
+        }
+        catch (SQLException e){
+            try{
+                c.rollback();
+            }
+            catch (SQLException e2){
+                System.err.println( e2.getClass().getName() + ": " + e2.getMessage() );
+                System.exit(0);
+            }
+        }
     }
 
 }

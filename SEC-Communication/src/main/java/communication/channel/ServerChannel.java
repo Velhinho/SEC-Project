@@ -94,7 +94,9 @@ public class ServerChannel implements Channel {
 
     private JsonObject unpackSignature(JsonObject message) throws ChannelException, CryptoException {
         var jsonWithNonce = message.getAsJsonObject("jsonWithNonce");
+        System.out.println("jsonWithNonce : " + jsonWithNonce);
         var signature = message.get("signature").getAsString();
+        System.out.println("signature : " + signature);
         var key = message.get("jsonWithNonce")
             .getAsJsonObject()
             .get("jsonObject")
@@ -103,7 +105,11 @@ public class ServerChannel implements Channel {
             .getAsJsonObject()
             .get("key")
             .getAsString();
+        System.out.println("key : " + key);
         var publicKey = KeyConversion.stringToKey(key);
+        System.out.println("publicKey : " + publicKey);
+        System.out.println(StringSignature.verify(jsonWithNonce.toString(), signature, publicKey));
+
         if (StringSignature.verify(jsonWithNonce.toString(), signature, publicKey)) {
             return jsonWithNonce;
         } else {
@@ -130,6 +136,7 @@ public class ServerChannel implements Channel {
             var message = JsonParser.parseString(reader.readLine()).getAsJsonObject();
             System.out.println("message: " + message + "\n");
             var jsonWithNonce = unpackSignature(message);
+            System.out.println("jsonWithNonce: " + jsonWithNonce + "\n");
             return unpackNonce(jsonWithNonce, getNonce());
         } catch (IOException | CryptoException exception) {
             throw new ChannelException(exception.getMessage());

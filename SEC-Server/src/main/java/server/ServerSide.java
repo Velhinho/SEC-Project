@@ -9,24 +9,27 @@ import communication.crypto.KeyConversion;
 import communication.messages.*;
 //import server.data.ServerData;
 import server.data.Account;
+import server.data.PendingTransfer;
 import server.data.ServerData;
+import server.data.Transfer;
 
+import java.lang.annotation.Repeatable;
 import java.security.KeyPair;
 import java.util.*;
 
 public class ServerSide {
     private final ServerChannel channel;
     private final KeyPair keyPair;
-    //private static ServerDataController serverData = new ServerDataController();
-    private static ServerData serverData = new ServerData();
+    private final ServerData serverData;
 
     public ServerChannel getChannel() {
         return channel;
     }
 
-    public ServerSide(ServerChannel channel, KeyPair keyPair) {
+    public ServerSide(ServerChannel channel, KeyPair keyPair, ServerData serverData) {
         this.channel = channel;
         this.keyPair = keyPair;
+        this.serverData = serverData;
     }
 
 
