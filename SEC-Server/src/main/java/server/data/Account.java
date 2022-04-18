@@ -1,8 +1,5 @@
 package server.data;
 
-import communication.messages.PendingTransfer;
-import communication.messages.Transfer;
-
 import java.util.ArrayList;
 import java.util.Objects;
 
@@ -11,12 +8,14 @@ public final class Account {
     private int balance;
     private ArrayList<Transfer> transfers = new ArrayList<>();
     private ArrayList<PendingTransfer> pendingTransfers = new ArrayList<>();
+    private int ts;
 
-    public Account(String key, int balance) {
+    public Account(String key, int balance, int ts) {
         this.key = key;
         this.balance = balance;
         this.transfers = new ArrayList<>();
         this.pendingTransfers = new ArrayList<>();
+        this.ts = ts;
     }
 
     public String key() {
@@ -71,7 +70,7 @@ public final class Account {
 
     public void acceptPendingTransferAsSender(String receiver){
         PendingTransfer senderAcceptedTransfer = null;
-        for (communication.messages.PendingTransfer senderPendingTransfer : pendingTransfers) {
+        for (PendingTransfer senderPendingTransfer : pendingTransfers) {
             if (senderPendingTransfer.sender().equals(key) && senderPendingTransfer.receiver().equals(receiver)) {
                 senderAcceptedTransfer = senderPendingTransfer;
                 break;
@@ -86,7 +85,7 @@ public final class Account {
 
     public void acceptPendingTransferAsReceiver(String sender){
         PendingTransfer receiverAcceptedTransfer = null;
-        for (communication.messages.PendingTransfer receiverPendingTransfer : pendingTransfers) {
+        for (PendingTransfer receiverPendingTransfer : pendingTransfers) {
             if (receiverPendingTransfer.sender().equals(sender) && receiverPendingTransfer.receiver().equals(key)) {
                 receiverAcceptedTransfer = receiverPendingTransfer;
                 break;

@@ -9,7 +9,9 @@ import communication.crypto.KeyConversion;
 import communication.messages.*;
 //import server.data.ServerData;
 import server.data.Account;
+import server.data.PendingTransfer;
 import server.data.ServerData;
+import server.data.Transfer;
 
 import java.security.KeyPair;
 import java.util.*;
