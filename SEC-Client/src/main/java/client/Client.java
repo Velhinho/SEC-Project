@@ -1,12 +1,9 @@
 package client;
 
 import communication.channel.BadChannel;
-import communication.channel.PlainChannel;
 import communication.channel.ClientChannel;
 import communication.crypto.KeyConversion;
-import org.junit.runner.RunWith;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
 import java.security.*;

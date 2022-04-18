@@ -39,6 +39,7 @@ public class ClientSide {
 
         var gson = new Gson();
         var responseJson = getChannel().receiveMessage().get("response");
+
         var response =  gson.fromJson(responseJson, new TypeToken<String>(){}.getType());
         System.out.println(response);
         return (String) response;

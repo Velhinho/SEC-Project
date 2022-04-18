@@ -1,5 +1,5 @@
 import client.ClientSide;
-import communication.channel.ClientChannel;
+import communication.channel.ClientChannelOld;
 import communication.crypto.KeyConversion;
 import org.junit.jupiter.api.*;
 
@@ -22,7 +22,7 @@ class ClientSideTest {
 
     // Client 1
     static Socket socket;
-    static ClientChannel channel;
+    static ClientChannelOld channel;
     static ClientSide clientSide;
     static KeyPair keyPair;
     static PublicKey publicKey;
@@ -30,7 +30,7 @@ class ClientSideTest {
 
     // Client 2
     static Socket socket2;
-    static ClientChannel channel2;
+    static ClientChannelOld channel2;
     static ClientSide clientSide2;
     static KeyPair keyPair2;
     static PublicKey publicKey2;
@@ -38,7 +38,7 @@ class ClientSideTest {
 
     // Client 3
     static Socket socket3;
-    static ClientChannel channel3;
+    static ClientChannelOld channel3;
     static ClientSide clientSide3;
     static KeyPair keyPair3;
     static PublicKey publicKey3;
@@ -84,9 +84,9 @@ class ClientSideTest {
         socket = new Socket("localhost", 8080);
         socket2 = new Socket("localhost", 8080);
         socket3 = new Socket("localhost", 8080);
-        channel = new ClientChannel(socket, privateKey);
-        channel2 = new ClientChannel(socket2, privateKey2);
-        channel3 = new ClientChannel(socket3, privateKey3);
+        channel = new ClientChannelOld(socket, privateKey);
+        channel2 = new ClientChannelOld(socket2, privateKey2);
+        channel3 = new ClientChannelOld(socket3, privateKey3);
         clientSide = new ClientSide(channel, publicKey);
         clientSide2 = new ClientSide(channel2, publicKey2);
         clientSide3 = new ClientSide(channel3, publicKey3);
