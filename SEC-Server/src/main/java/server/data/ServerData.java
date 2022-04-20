@@ -15,13 +15,13 @@ public class ServerData {
     private Connection c = null;
     private final int replicaNumber;
 
-    public ServerData(int replicaNumber){
+    public ServerData(int replicaNumber, String reset){
         this.replicaNumber = replicaNumber;
-        connectToDatabase();
+        connectToDatabase(reset);
     }
 
     // Sets connection to Database to autoCommit as false to allow for transactional behaviour
-    public void connectToDatabase(){
+    public void connectToDatabase(String reset){
         try {
             Class.forName("org.sqlite.JDBC");
             c = DriverManager.getConnection("jdbc:sqlite:SEC" + replicaNumber + ".db");
@@ -30,7 +30,7 @@ public class ServerData {
 
             }
             c.setAutoCommit(false);
-            createTables();
+            createTables(reset);
         } catch ( Exception e ) {
             System.err.println( e.getClass().getName() + ": " + e.getMessage() );
             System.exit(0);
@@ -38,7 +38,7 @@ public class ServerData {
         System.out.println("Connected to database SEC" + replicaNumber + ".db successfully");
     }
 
-    public void createTables(){
+    public void createTables(String reset){
         PreparedStatement preparedStatement = null;
         PreparedStatement preparedStatement1 = null;
         PreparedStatement preparedStatement2 = null;
@@ -53,20 +53,24 @@ public class ServerData {
         String sql_pendingTransfers;
         try{
 
-            sql_drop_accounts = "DROP TABLE IF EXISTS ACCOUNTS";
-            preparedStatement3 = c.prepareStatement(sql_drop_accounts);
-            preparedStatement3.execute();
-            preparedStatement3.close();
+            if(reset.equals("yes")) {
 
-            sql_drop_transfers = "DROP TABLE IF EXISTS transfers";
-            preparedStatement4 = c.prepareStatement(sql_drop_transfers);
-            preparedStatement4.execute();
-            preparedStatement4.close();
+                sql_drop_accounts = "DROP TABLE IF EXISTS ACCOUNTS";
+                preparedStatement3 = c.prepareStatement(sql_drop_accounts);
+                preparedStatement3.execute();
+                preparedStatement3.close();
 
-            sql_drop_pendingTransfers = "DROP TABLE IF EXISTS pending_transfers";
-            preparedStatement5 = c.prepareStatement(sql_drop_pendingTransfers);
-            preparedStatement5.execute();
-            preparedStatement5.close();
+                sql_drop_transfers = "DROP TABLE IF EXISTS transfers";
+                preparedStatement4 = c.prepareStatement(sql_drop_transfers);
+                preparedStatement4.execute();
+                preparedStatement4.close();
+
+                sql_drop_pendingTransfers = "DROP TABLE IF EXISTS pending_transfers";
+                preparedStatement5 = c.prepareStatement(sql_drop_pendingTransfers);
+                preparedStatement5.execute();
+                preparedStatement5.close();
+
+            }
 
             sql_accounts = "CREATE TABLE IF NOT EXISTS ACCOUNTS (\n" +
                            "account_id INTEGER PRIMARY KEY,\n" +
@@ -151,7 +155,7 @@ public class ServerData {
             pstmt = c.prepareStatement("INSERT INTO accounts (public_key, balance, ts) VALUES (?,?,?)");
             pstmt.setString(1, publicKey);
             pstmt.setInt(2, 10);
-            pstmt.setInt(3, 0);
+            pstmt.setLong(3, 0);
             pstmt.executeUpdate();
             c.commit();
         }catch (SQLException e){
@@ -368,8 +372,9 @@ public class ServerData {
                 .stream()
                 .filter(d -> d.sender().equals(sender) && d.receiver().equals(receiver))
                 .collect(Collectors.toList());
-        transfers.sort(Comparator.comparing(d -> d.getTimestamp()));
+        System.out.println(transfers);
         Collections.sort(transfers, Collections.reverseOrder());
+        //Collections.sort(transfers, Collections.reverseOrder());
         if (transfers.size() <= 0){
             return "No transfers to  receive!";
         }

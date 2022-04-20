@@ -16,12 +16,22 @@ import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class Register {
-    private final AtomicLong timestamp = new AtomicLong(0);
-    private final BroadcastChannel broadcastChannel;
-    private final int quorumSize;
+    private AtomicLong timestamp = new AtomicLong(0);
+    private BroadcastChannel broadcastChannel;
+    private int quorumSize;
+    private boolean reading = false;
 
     public Register(BroadcastChannel broadcastChannel, int quorumSize) {
         this.broadcastChannel = broadcastChannel;
+        this.quorumSize = quorumSize;
+        this.reading = false;
+    }
+
+    public void setBroadcastChannel(BroadcastChannel broadcastChannel) {
+        this.broadcastChannel = broadcastChannel;
+    }
+
+    public void setQuorumSize(int quorumSize) {
         this.quorumSize = quorumSize;
     }
 
@@ -49,6 +59,7 @@ public class Register {
 
     public String write(JsonObject jsonObject) {
         var timestamp = getTimestamp().incrementAndGet();
+        System.out.println(timestamp);
         var writeMsg = makeWriteMsg(jsonObject, timestamp);
         System.out.println(writeMsg);
         getBroadcastChannel().broadcastMsg(writeMsg);
@@ -98,11 +109,8 @@ public class Register {
 
     private boolean verifyAuditResponse(JsonObject jsonObject) {
         Gson gson = new Gson();
-        AuditResponse auditResponse =  gson.fromJson(jsonObject, AuditResponse.class);
+        AuditResponse auditResponse =  gson.fromJson(jsonObject.get("response").getAsJsonObject(), AuditResponse.class);
         ArrayList<AcceptedTransfer> acceptedTransfers = auditResponse.getTransfers();
-        if (acceptedTransfers == null){
-            acceptedTransfers = new ArrayList<>();
-        }
         for(AcceptedTransfer acceptedTransfer : acceptedTransfers){
             PublicKey sender = KeyConversion.stringToKey(acceptedTransfer.sender());
             PublicKey receiver = KeyConversion.stringToKey(acceptedTransfer.receiver());
@@ -127,12 +135,11 @@ public class Register {
 
     private boolean verifyCheckResponse(JsonObject jsonObject) {
         Gson gson = new Gson();
-        CheckResponse checkResponse =  gson.fromJson(jsonObject, CheckResponse.class);
+        System.out.println(jsonObject);
+        CheckResponse checkResponse =  gson.fromJson(jsonObject.get("response").getAsJsonObject(), CheckResponse.class);
         ArrayList<PendingTransfer> pendingTransfers = checkResponse.getTransfers();
         System.out.println("pending_transfers : " + pendingTransfers);
-        if (pendingTransfers == null){
-            pendingTransfers = new ArrayList<>();
-        }
+        System.out.println("balance : " + checkResponse.getBalance());
         for(PendingTransfer pendingTransfer : pendingTransfers){
             PublicKey sender = KeyConversion.stringToKey(pendingTransfer.sender());
             PublicKey receiver = KeyConversion.stringToKey(pendingTransfer.receiver());
@@ -157,7 +164,7 @@ public class Register {
 
     private JsonObject highestValue(ArrayList<JsonObject> jsonObjects) {
         JsonObject maxJsonObject = null;
-        long max_ts = 0;
+        long max_ts = -1;
         for(JsonObject currentJsonObject : jsonObjects){
             long current_ts = currentJsonObject.get("ts").getAsLong();
             if(current_ts > max_ts){
@@ -190,13 +197,19 @@ public class Register {
     public JsonObject read(JsonObject object) {
         var readId = generateReadId();
         var readMsg = makeReadMsg(object, readId);
+        reading = true;
         broadcastChannel.broadcastMsg(readMsg);
 
         var msgs = broadcastChannel.receiveMsgs();
+        System.out.println(msgs);
         if (checkReadIds(msgs, readId) && verifySignatures(msgs) && hasQuorumSize(msgs.size())) {
             return highestValue(msgs);
         } else {
             throw new RuntimeException("Too many crashes");
         }
+    }
+
+    public void setTimestamp(AtomicLong timestamp) {
+        this.timestamp = timestamp;
     }
 }

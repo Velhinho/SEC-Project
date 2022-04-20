@@ -11,9 +11,9 @@ public final class Account {
     private int balance;
     private ArrayList<AcceptedTransfer> acceptedTransfers = new ArrayList<>();
     private ArrayList<PendingTransfer> pendingTransfers = new ArrayList<>();
-    private int ts;
+    private long ts;
 
-    public Account(String key, int balance, int ts) {
+    public Account(String key, int balance, long ts) {
         this.key = key;
         this.balance = balance;
         this.acceptedTransfers = new ArrayList<>();
@@ -71,7 +71,7 @@ public final class Account {
         return pendingTransfers;
     }
 
-    public int getTs() {
+    public long getTs() {
         return ts;
     }
 

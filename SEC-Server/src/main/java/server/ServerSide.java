@@ -128,6 +128,16 @@ public class ServerSide {
             var stringResponse =  receiveAmount(request.getSender(), request.getReceiver(), request.getKey(), wts, signature);
             var responseJson = makeResponse(stringResponse);
             getChannel().sendMessage(responseJson);
+        } else if (Objects.equals(requestType, "timeStamp")){
+            var request = gson.fromJson(getRequest(requestJson), TimeStampRequest.class);
+            var rid = getRid(message);
+            System.out.println("timeStamp " + request);
+
+            var stringResponse = getAccountTsResponse(request.getKey());
+            var responseJson = makeReadResponse(stringResponse, rid, getAccountTs(request.getKey()));
+            getChannel().sendMessage(responseJson);
+
+
         }
         else {
             throw new RuntimeException("invalid json message type");
@@ -197,7 +207,15 @@ public class ServerSide {
         if( account != null){
             return account.getTs();
         }
-        return -1;
+        return 0;
+    }
+
+    private String getAccountTsResponse(String publicKey){
+        Gson gson = new Gson();
+        String json;
+        TimeStampResponse timeStampResponse = new TimeStampResponse("timeStamp", getAccountTs(publicKey));
+        json = gson.toJson(timeStampResponse);
+        return json;
     }
 
 }

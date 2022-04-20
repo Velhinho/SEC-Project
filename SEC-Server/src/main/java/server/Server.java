@@ -55,9 +55,15 @@ public class Server {
             replicaNumber = Integer.parseInt(args[2]);
         }
 
+        String reset = "no";
+
+        if(args[3] != null){
+            reset = args[3];
+        }
+
         int port = 8079 + replicaNumber;
 
-        ServerData serverData = new ServerData(replicaNumber);
+        ServerData serverData = new ServerData(replicaNumber, reset);
 
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             while (true) {

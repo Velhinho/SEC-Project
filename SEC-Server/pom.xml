@@ -48,6 +48,7 @@
                         <argument>serverKeys.jks</argument>
                         <argument>fixolas</argument>
                         <argument>${replicaNumber}</argument>
+                        <argument>${reset}</argument>
                     </arguments>
                 </configuration>
             </plugin>

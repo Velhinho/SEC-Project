@@ -3,7 +3,7 @@ package communication.messages;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public abstract class Transfer {
+public abstract class Transfer implements Comparable<Transfer> {
     private final String signature;
     private final String  sender;
     private final String receiver;
@@ -71,5 +71,10 @@ public abstract class Transfer {
 
     public long getWts() {
         return wts;
+    }
+
+    @Override
+    public int compareTo(Transfer t) {
+        return getTimestamp().compareTo(t.getTimestamp());
     }
 }
