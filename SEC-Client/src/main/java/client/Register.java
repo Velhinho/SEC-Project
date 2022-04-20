@@ -1,9 +1,16 @@
 package client;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import communication.channel.BroadcastChannel;
+import communication.crypto.CryptoException;
+import communication.crypto.KeyConversion;
+import communication.crypto.StringSignature;
+import communication.messages.*;
 
 import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicLong;
@@ -68,7 +75,71 @@ public class Register {
     }
 
     private boolean verifySignatures(ArrayList<JsonObject> jsonObjects) {
-        //FIXME not checking signatures
+        for(JsonObject jsonObject : jsonObjects){
+            String type = jsonObject.get("type").getAsString();
+            if(type.equals("Check")){
+                if(!verifyCheckResponse(jsonObject)){
+                    return false;
+                }
+            }
+            else if(type.equals("Audit")){
+                if(!verifyAuditResponse(jsonObject)){
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private boolean verifyAuditResponse(JsonObject jsonObject) {
+        Gson gson = new Gson();
+        AuditResponse auditResponse =  gson.fromJson(jsonObject, AuditResponse.class);
+        ArrayList<AcceptedTransfer> acceptedTransfers = auditResponse.getTransfers();
+        for(AcceptedTransfer acceptedTransfer : acceptedTransfers){
+            PublicKey sender = KeyConversion.stringToKey(acceptedTransfer.sender());
+            PublicKey receiver = KeyConversion.stringToKey(acceptedTransfer.receiver());
+            ReceiveAmountRequest receiveAmountRequest = new ReceiveAmountRequest(sender, receiver);
+            String signature = acceptedTransfer.getSignature();
+            long wts = acceptedTransfer.getWts();
+            JsonObject requestJson = new JsonObject();
+            requestJson.addProperty("requestType", "sendAmount");
+            requestJson.add("request", JsonParser.parseString(gson.toJson(receiveAmountRequest)));
+            JsonObject requestJsonWts = makeWriteMsg(requestJson, wts);
+            try {
+                if (!StringSignature.verify(requestJsonWts.toString(), signature, receiver)) {
+                    return false;
+                }
+            }
+            catch (CryptoException e){
+                System.exit(0);
+            }
+        }
+        return true;
+    }
+
+    private boolean verifyCheckResponse(JsonObject jsonObject) {
+        Gson gson = new Gson();
+        CheckResponse checkResponse =  gson.fromJson(jsonObject, CheckResponse.class);
+        ArrayList<PendingTransfer> pendingTransfers = checkResponse.getTransfers();
+        for(PendingTransfer pendingTransfer : pendingTransfers){
+            PublicKey sender = KeyConversion.stringToKey(pendingTransfer.sender());
+            PublicKey receiver = KeyConversion.stringToKey(pendingTransfer.receiver());
+            SendAmountRequest sendAmountRequest = new SendAmountRequest(sender, receiver, pendingTransfer.amount());
+            String signature = pendingTransfer.getSignature();
+            long wts = pendingTransfer.getWts();
+            JsonObject requestJson = new JsonObject();
+            requestJson.addProperty("requestType", "sendAmount");
+            requestJson.add("request", JsonParser.parseString(gson.toJson(sendAmountRequest)));
+            JsonObject requestJsonWts = makeWriteMsg(requestJson, wts);
+            try {
+                if (!StringSignature.verify(requestJsonWts.toString(), signature, sender)) {
+                    return false;
+                }
+            }
+            catch (CryptoException e){
+                System.exit(0);
+            }
+        }
         return true;
     }
 

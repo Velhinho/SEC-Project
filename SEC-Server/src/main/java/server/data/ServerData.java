@@ -1,5 +1,8 @@
 package server.data;
 
+import communication.messages.AcceptedTransfer;
+import communication.messages.PendingTransfer;
+
 import java.sql.*;
 import java.util.Collections;
 import java.util.Comparator;
@@ -152,6 +155,7 @@ public class ServerData {
                 int amount = rs2.getInt("amount");
                 int pending = rs2.getInt("pending");
                 String timestamp = rs2.getString("timestamp");
+<<<<<<< Updated upstream
                 transfer = new Transfer(source_key, receiver_key, amount, timestamp);
                 if(pending == 0){
                     account.addTransfer(transfer);
@@ -159,6 +163,29 @@ public class ServerData {
                 else{
                     account.addPendingTransfer(transfer);
                 }
+=======
+                String senderSignature = rs2.getString("sender_signature");
+                String receiverSignature = rs2.getString("receiver_signature");
+                long wts = rs2.getLong("wts");
+                acceptedTransfer = new AcceptedTransfer(source_key, receiver_key, amount, timestamp, senderSignature, receiverSignature, wts );
+                account.addTransfer(acceptedTransfer);
+            }
+
+            sql_pendingTransfers = "SELECT * FROM pending_transfers WHERE source_key = ? OR receiver_key = ? ;";
+            pstmt3 = c.prepareStatement(sql_pendingTransfers);
+            pstmt3.setString(1, publicKey);
+            pstmt3.setString(2, publicKey);
+            rs3 = pstmt3.executeQuery();
+            while ( rs3.next() ){
+                String source_key = rs3.getString("source_key");
+                String receiver_key = rs3.getString("receiver_key");
+                int amount = rs3.getInt("amount");
+                String timestamp = rs3.getString("timestamp");
+                String senderSignature = rs3.getString("sender_signature");
+                long wts = rs3.getLong("wts");
+                pendingTransfer = new PendingTransfer(source_key, receiver_key, amount, timestamp, senderSignature, wts);
+                account.addPendingTransfer(pendingTransfer);
+>>>>>>> Stashed changes
             }
             c.commit();
         } catch (SQLException e){

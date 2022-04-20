@@ -1,5 +1,8 @@
 package server.data;
 
+import communication.messages.AcceptedTransfer;
+import communication.messages.PendingTransfer;
+
 import java.util.ArrayList;
 import java.util.Objects;
 

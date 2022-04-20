@@ -3,15 +3,20 @@ package server;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+
 import communication.channel.Channel;
 import communication.channel.ChannelException;
 import communication.crypto.KeyConversion;
 import communication.messages.*;
 //import server.data.ServerData;
 import server.data.Account;
-import server.data.PendingTransfer;
+import communication.messages.PendingTransfer;
 import server.data.ServerData;
+<<<<<<< Updated upstream
 import server.data.Transfer;
+=======
+import communication.messages.AcceptedTransfer;
+>>>>>>> Stashed changes
 
 import java.security.KeyPair;
 import java.util.*;
@@ -19,8 +24,12 @@ import java.util.*;
 public class ServerSide {
     private final Channel channel;
     private final KeyPair keyPair;
+<<<<<<< Updated upstream
     //private static ServerDataController serverData = new ServerDataController();
     private static ServerData serverData = new ServerData();
+=======
+    private final ServerData serverData;
+>>>>>>> Stashed changes
 
     public Channel getChannel() {
         return channel;
@@ -106,12 +115,24 @@ public class ServerSide {
 
     private String audit(String publicKey){
         Account account = serverData.getAccount(publicKey);
+        Gson gson = new Gson();
+        String json;
         if( account != null){
+<<<<<<< Updated upstream
             ArrayList<Transfer> transfers = account.getTransfers();
             transfers.sort(Comparator.comparing(Transfer::getTimestamp));
             return "transfers = " + transfers;
+=======
+            ArrayList<AcceptedTransfer> acceptedTransfers = account.getAcceptedTransfers();
+            acceptedTransfers.sort(Comparator.comparing(AcceptedTransfer::getTimestamp));
+            AuditResponse auditResponse = new AuditResponse(acceptedTransfers, "Audit");
+            json = gson.toJson(auditResponse);
+            return json;
+>>>>>>> Stashed changes
         }
-        return "Account with public key = " + publicKey + " does not exist";
+        ErrorResponse errorResponse = new ErrorResponse("Error", "Account with public key = " + publicKey + " does not exist");
+        json = gson.toJson(errorResponse);
+        return json;
     }
 
     private String sendAmount(String sender, String receiver, int amount, String key) {
@@ -123,13 +144,25 @@ public class ServerSide {
 
     private String checkAccount(String publicKey){
         Account account = serverData.getAccount(publicKey);
+        Gson gson = new Gson();
+        String json;
         if( account != null){
             int balance = account.balance();
+<<<<<<< Updated upstream
             ArrayList<PendingTransfer> pendingTransfers = account.getPendingTransfers();
             pendingTransfers.sort(Comparator.comparing(d -> d.transfer().getTimestamp()));
             return "Account Balance: " + balance + " \n" + pendingTransfers;
+=======
+            ArrayList<PendingTransfer> pendingTransfers =  account.getPendingTransfers();
+            pendingTransfers.sort(Comparator.comparing(d -> d.getTimestamp()));
+            CheckResponse checkResponse = new CheckResponse(balance, pendingTransfers, "Check");
+            json = gson.toJson(checkResponse);
+            return json;
+>>>>>>> Stashed changes
         }
-        return "Account with public key = " + publicKey + " does not exist";
+        ErrorResponse errorResponse = new ErrorResponse("Error", "Account with public key = " + publicKey + " does not exist");
+        json = gson.toJson(errorResponse);
+        return json;
     }
 
     private String receiveAmount(String senderKey, String receiverKey, String key){

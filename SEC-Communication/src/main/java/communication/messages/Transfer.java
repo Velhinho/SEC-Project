@@ -1,4 +1,4 @@
-package server.data;
+package communication.messages;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -9,12 +9,28 @@ public final class Transfer {
     private final String receiver;
     private final int amount;
     private final Date timestamp;
+    private final long wts;
 
+<<<<<<< Updated upstream:SEC-Server/src/main/java/server/data/Transfer.java
     public Transfer(String sender, String receiver, int amount, String timestamp) {
+=======
+    public Transfer(String sender, String receiver, int amount, String timestamp, String signature, long wts){
+>>>>>>> Stashed changes:SEC-Communication/src/main/java/communication/messages/Transfer.java
         this.sender = sender;
         this.receiver = receiver;
         this.amount = amount;
         this.timestamp = stringToDate(timestamp);
+<<<<<<< Updated upstream:SEC-Server/src/main/java/server/data/Transfer.java
+=======
+        this.signature = signature;
+        this.wts = wts;
+    }
+
+    public static String DateToString(Date date){
+        //SimpleDateFormat formatter= new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
+        SimpleDateFormat formatter= new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss.SSS z");
+        return formatter.format(date);
+>>>>>>> Stashed changes:SEC-Communication/src/main/java/communication/messages/Transfer.java
     }
 
     public static Date stringToDate(String timestamp){
@@ -74,4 +90,11 @@ public final class Transfer {
                 "amount=" + amount + ']';
     }
 
+<<<<<<< Updated upstream:SEC-Server/src/main/java/server/data/Transfer.java
 }
+=======
+    public long getWts() {
+        return wts;
+    }
+}
+>>>>>>> Stashed changes:SEC-Communication/src/main/java/communication/messages/Transfer.java
