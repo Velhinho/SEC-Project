@@ -1,7 +1,13 @@
 package client.commands;
 
 import client.ClientSide;
+import client.Register;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import communication.crypto.KeyConversion;
+import communication.messages.ReceiveAmountRequest;
+import communication.messages.SendAmountRequest;
 
 import java.util.Objects;
 
@@ -15,10 +21,15 @@ public final class ReceiveCommand implements Command {
     }
 
     @Override
-    public void execCommand(ClientSide clientSide) throws Exception {
+    public void execCommand(Register register) throws Exception {
         var senderKey = KeyConversion.stringToKey(sender);
         var receiverKey = KeyConversion.stringToKey(receiver);
-        clientSide.receiveAmountRequest(senderKey, receiverKey);
+        ReceiveAmountRequest receiveAmountRequest = new ReceiveAmountRequest(senderKey, receiverKey);
+        var gson = new Gson();
+        JsonObject requestJson = new JsonObject();
+        requestJson.addProperty("requestType", "receiveAmount");
+        requestJson.add("request", JsonParser.parseString(gson.toJson(receiveAmountRequest)));
+        register.write(requestJson);
     }
 
     public String sender() {

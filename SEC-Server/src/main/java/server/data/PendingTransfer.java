@@ -1,47 +1,34 @@
 package server.data;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Objects;
 
-public final class PendingTransfer {
-    private final Transfer transfer;
+public final class PendingTransfer extends Transfer {
 
-    public PendingTransfer(Transfer transfer) {
-        this.transfer = transfer;
+    public PendingTransfer(String sender, String receiver, int amount, String timestamp, String signature) {
+        super(sender,receiver,amount,timestamp,signature);
     }
 
-    public Transfer transfer() {
-        return transfer;
-    }
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == this) return true;
-        if (obj == null || obj.getClass() != this.getClass()) return false;
-        var that = (PendingTransfer) obj;
-        return Objects.equals(this.transfer, that.transfer);
+        return super.equals(obj);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(transfer);
+        return super.hashCode();
     }
 
     @Override
     public String toString() {
-        return "PendingTransfer[" +
-                "transfer=" + transfer + ']';
+        return super.toString();
     }
 
-    public String sender(){
-        return transfer.sender();
-    }
 
-    public String receiver(){
-        return transfer.receiver();
-    }
 
-    public int amount(){
-        return transfer.amount();
-    }
+
+
 
 }

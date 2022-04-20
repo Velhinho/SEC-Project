@@ -7,7 +7,7 @@ import java.io.InputStreamReader;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
-public class CommandParser {
+public class CommandParserOld {
     private static Optional<Command> open(String line) {
         var regex = "open (.+)";
         var p = Pattern.compile(regex);
@@ -64,7 +64,7 @@ public class CommandParser {
         }
     }
 
-    public static Command parseCommand() throws Exception {
+    public static void parseCommand(ClientSide clientSide) throws Exception {
         var commands = "open <KEY> \ncheck <KEY> \nsend <SENDER KEY> <RECEIVER KEY> <AMOUNT> \nreceive <SENDER KEY> <RECEIVER KEY> \naudit <KEY>";
         System.out.println("Commands:\n" + commands);
 
@@ -76,6 +76,5 @@ public class CommandParser {
                 .or(() -> receive(line))
                 .or(() -> audit(line))
                 .orElseThrow(RuntimeException::new);
-        return command;
     }
 }

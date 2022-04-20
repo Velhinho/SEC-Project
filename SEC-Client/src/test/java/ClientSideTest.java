@@ -1,5 +1,8 @@
-import client.ClientSide;
-import communication.channel.ClientChannelOld;
+import client.Register;
+import client.commands.OpenCommand;
+import communication.channel.BroadcastChannel;
+import communication.channel.Channel;
+import communication.channel.ClientChannel;
 import communication.crypto.KeyConversion;
 import org.junit.jupiter.api.*;
 
@@ -8,38 +11,41 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class ClientSideTest {
 
-    // Server
     static final PublicKey serverPublicKey = KeyConversion.stringToKey("MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDR5XF" +
                                                                        "Qum9i0YS5clSPUpc4tVsd/fr383tXqhEu3+vYAi0ORqFQ/7h6ZlSH66xO6etg9Z1reyjsSo81t9rt1jg8Jo3JGhDf053e" +
                                                                        "8KDXr9HJgqLSZPi1VJtlvJV4jZ4xBdKtsG0A95XA/CeA3JaQB8ZmV5mY8qj/SRIWanS4JT7kzQIDAQAB");
 
 
-    // Client 1
     static Socket socket;
-    static ClientChannelOld channel;
-    static ClientSide clientSide;
+    static Register register;
+    static ClientChannel clientChannel;
+    static ArrayList<Channel> channels;
+    static BroadcastChannel broadcastChannel;
     static KeyPair keyPair;
     static PublicKey publicKey;
     static PrivateKey privateKey;
 
-    // Client 2
     static Socket socket2;
-    static ClientChannelOld channel2;
-    static ClientSide clientSide2;
+    static Register register2;
+    static ClientChannel clientChannel2;
+    static ArrayList<Channel> channels2;
+    static BroadcastChannel broadcastChannel2;
     static KeyPair keyPair2;
     static PublicKey publicKey2;
     static PrivateKey privateKey2;
 
-    // Client 3
     static Socket socket3;
-    static ClientChannelOld channel3;
-    static ClientSide clientSide3;
+    static Register register3;
+    static ClientChannel clientChannel3;
+    static ArrayList<Channel> channels3;
+    static BroadcastChannel broadcastChannel3;
     static KeyPair keyPair3;
     static PublicKey publicKey3;
     static PrivateKey privateKey3;
@@ -64,19 +70,6 @@ class ClientSideTest {
         publicKey3 = keyPair3.getPublic();
         privateKey3 = keyPair3.getPrivate();
 
-        /* Generates the socket, channel and clientSide */
-        /*
-        socket = new Socket("localhost", 8080);
-        socket2 = new Socket("localhost", 8080);
-        socket3 = new Socket("localhost", 8080);
-        channel = new ClientChannel(socket, privateKey);
-        channel2 = new ClientChannel(socket2, privateKey2);
-        channel3 = new ClientChannel(socket3, privateKey3);
-        clientSide = new ClientSide(channel, publicKey);
-        clientSide2 = new ClientSide(channel2, publicKey2);
-        clientSide3 = new ClientSide(channel3, publicKey3);
-        */
-
     }
 
     @BeforeEach
@@ -84,20 +77,39 @@ class ClientSideTest {
         socket = new Socket("localhost", 8080);
         socket2 = new Socket("localhost", 8080);
         socket3 = new Socket("localhost", 8080);
-        channel = new ClientChannelOld(socket, privateKey);
-        channel2 = new ClientChannelOld(socket2, privateKey2);
-        channel3 = new ClientChannelOld(socket3, privateKey3);
-        clientSide = new ClientSide(channel, publicKey);
-        clientSide2 = new ClientSide(channel2, publicKey2);
-        clientSide3 = new ClientSide(channel3, publicKey3);
+
+        clientChannel = new ClientChannel(socket, privateKey);
+        clientChannel2 = new ClientChannel(socket2, privateKey2);
+        clientChannel3 = new ClientChannel(socket3, privateKey3);
+
+        channels.add(clientChannel);
+        channels2.add(clientChannel2);
+        channels3.add(clientChannel3);
+
+        broadcastChannel = new BroadcastChannel(channels);
+        broadcastChannel2 = new BroadcastChannel(channels2);
+        broadcastChannel3 = new BroadcastChannel(channels3);
+
+        register = new Register(broadcastChannel, 0);
+        register2 = new Register(broadcastChannel2, 0);
+        register3 = new Register(broadcastChannel3, 0);
     }
 
-    //OpenAccounts Test
+    @AfterEach
+    void closeSocket() throws Exception{
+        register.getBroadcastChannel().closeSocket();
+        register2.getBroadcastChannel().closeSocket();
+        register3.getBroadcastChannel().closeSocket();
+    }
+
 
     @Test
     @Order(1)
     void openAnAccount() throws Exception {
-        assertEquals("Account Opened With Success!",clientSide.openAccount(publicKey));
+        String publicKeyString = KeyConversion.keyToString(publicKey);
+        OpenCommand openCommand = new OpenCommand(publicKeyString);
+        openCommand.execCommand(register);
+        assertEquals("Account Opened With Success!", ));
     }
 
     @Test
@@ -110,10 +122,12 @@ class ClientSideTest {
     @Test
     @Order(3)
     void openAnotherAccount() throws Exception {
-        assertEquals("Account Opened With Success!",clientSide2.openAccount(publicKey2));
+        String publicKeyString = KeyConversion.keyToString(publicKey2);
+        OpenCommand openCommand = new OpenCommand(publicKeyString);
+        openCommand.execCommand(register2);;
+        assertEquals("Account Opened With Success!",);
     }
 
-    //SendAmount Tests
 
     @Test
     @Order(4)
@@ -145,7 +159,6 @@ class ClientSideTest {
         assertEquals("Transfer made with success.", clientSide2.sendAmountRequest(publicKey2, publicKey, 5));
     }
 
-    //CheckAccount Test
     @Test
     @Order(9)
     void checkAccountButNoAccount() throws Exception {
@@ -188,7 +201,6 @@ class ClientSideTest {
                      + "]", clientSide2.checkAccount(publicKey2));
     }
 
-    //ReceiveAmount
     @Test
     @Order(12)
     void ReceiveAmountSenderDoesNotExist() throws Exception {
@@ -213,7 +225,6 @@ class ClientSideTest {
         assertEquals("Transfer received with success!", clientSide2.receiveAmountRequest(publicKey, publicKey2));
     }
 
-    //Audit Tests
     @Test
     @Order(16)
     void AuditAnAccountThatDoesntExist() throws Exception {

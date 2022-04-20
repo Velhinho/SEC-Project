@@ -57,16 +57,21 @@ public class ServerChannel implements Channel {
         // message = {"signature": ..., "jsonObject": {"request": {"key": ..., ...}}}
 
         var signature = message.get("signature").getAsString();
+        //System.out.println("signature : " + signature);
         var jsonObject = message.get("jsonObject").getAsJsonObject();
-        var key = message.get("jsonObject")
-                .getAsJsonObject()
+        //System.out.println();
+        //System.out.println("jsonObject : " + jsonObject);
+        //System.out.println();
+        var key = jsonObject
                 .get("request")
                 .getAsJsonObject()
                 .get("key")
                 .getAsString();
         var publicKey = KeyConversion.stringToKey(key);
-        if (StringSignature.verify(jsonObject.toString(), signature, publicKey)) {
-            return jsonObject;
+        var jsonNoSignature = message.deepCopy();
+        jsonNoSignature.remove("signature");
+        if (StringSignature.verify(jsonNoSignature.toString(), signature, publicKey)) {
+            return message;
         } else {
             throw new ChannelException("Wrong signature");
         }
@@ -81,6 +86,12 @@ public class ServerChannel implements Channel {
             return unpackSignature(message);
         } catch (IOException | CryptoException exception) {
             throw new ChannelException(exception.getMessage());
+        }
+    }
+
+    public void closeSocket() throws IOException{
+        if(!socket.isClosed()) {
+            socket.close();
         }
     }
 }

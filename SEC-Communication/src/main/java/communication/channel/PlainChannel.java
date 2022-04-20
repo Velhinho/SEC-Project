@@ -47,4 +47,10 @@ public class PlainChannel implements Channel {
             throw new ChannelException(exception.getMessage());
         }
     }
+
+    public void closeSocket() throws IOException{
+        if(!socket.isClosed()) {
+            socket.close();
+        }
+    }
 }

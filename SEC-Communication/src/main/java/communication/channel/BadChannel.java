@@ -122,6 +122,8 @@ public class BadChannel implements Channel {
     }
 
     public void closeSocket() throws IOException{
-        socket.close();
+        if(!socket.isClosed()) {
+            socket.close();
+        }
     }
 }

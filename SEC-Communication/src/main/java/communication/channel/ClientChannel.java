@@ -30,12 +30,23 @@ public class ClientChannel implements Channel {
         return privateKey;
     }
 
+    /*
     private JsonObject appendSignature(JsonObject jsonObject, String signature) {
         // newJson = {"signature": ..., "jsonObject": {"key": ..., ...}}
 
         var newJson = new JsonObject();
         newJson.addProperty("signature", signature);
         newJson.add("jsonObject", jsonObject);
+        jsonObject.addProperty("signature", signature);
+        System.out.println(jsonObject);
+
+        return newJson;
+    }*/
+
+    private JsonObject appendSignature(JsonObject jsonObject, String signature) {
+        // newJson = {"signature": ..., "jsonObject": {"key": ..., ...}}
+        var newJson = jsonObject.deepCopy();
+        newJson.addProperty("signature", signature);
         return newJson;
     }
 
@@ -44,7 +55,6 @@ public class ClientChannel implements Channel {
         try {
             var signature = StringSignature.sign(jsonObject.toString(), getPrivateKey());
             var message = appendSignature(jsonObject, signature);
-
             var writer = new PrintWriter(getSocket().getOutputStream());
             writer.println(message);
             writer.flush();
@@ -79,6 +89,12 @@ public class ClientChannel implements Channel {
             return unpackSignature(message);
         } catch (IOException | CryptoException exception) {
             throw new ChannelException(exception.getMessage());
+        }
+    }
+
+    public void closeSocket() throws IOException{
+        if(!socket.isClosed()) {
+            socket.close();
         }
     }
 }
