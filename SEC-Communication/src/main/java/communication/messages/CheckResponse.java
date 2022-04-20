@@ -1,6 +1,7 @@
 package communication.messages;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class CheckResponse {
     private final int balance;
@@ -17,7 +18,7 @@ public class CheckResponse {
         return type;
     }
 
-    public ArrayList<PendingTransfer> getTransfers() {
+    public List<PendingTransfer> getTransfers() {
         return transfers;
     }
 

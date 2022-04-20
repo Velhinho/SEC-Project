@@ -32,10 +32,8 @@ public class ClientChannel implements Channel {
 
     private JsonObject appendSignature(JsonObject jsonObject, String signature) {
         // newJson = {"signature": ..., "jsonObject": {"key": ..., ...}}
-
-        var newJson = new JsonObject();
+        var newJson = jsonObject.deepCopy();
         newJson.addProperty("signature", signature);
-        newJson.add("jsonObject", jsonObject);
         return newJson;
     }
 
@@ -79,6 +77,12 @@ public class ClientChannel implements Channel {
             return unpackSignature(message);
         } catch (IOException | CryptoException exception) {
             throw new ChannelException(exception.getMessage());
+        }
+    }
+
+    public void closeSocket() throws IOException{
+        if(!socket.isClosed()) {
+            socket.close();
         }
     }
 }

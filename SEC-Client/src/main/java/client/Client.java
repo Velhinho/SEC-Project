@@ -1,12 +1,19 @@
 package client;
 
+import client.commands.Command;
+import client.commands.OpenCommand;
+import com.google.gson.JsonObject;
 import communication.channel.BadChannel;
+import communication.channel.BroadcastChannel;
+import communication.channel.Channel;
 import communication.channel.ClientChannel;
 import communication.crypto.KeyConversion;
 
 import java.io.InputStream;
+import java.net.ConnectException;
 import java.net.Socket;
 import java.security.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -31,26 +38,46 @@ public class Client {
         System.out.println("Starting Client");
         System.out.println("Args:" + Arrays.toString(args));
 
+
         try {
             var keyPair = getKeyPair(args[0], args[1], args[2]);
             System.out.println("My Key: " + KeyConversion.keyToString(keyPair.getPublic()));
+            var quorumSize = 0;
+            if(args[4] != null){
+                quorumSize = Integer.parseInt(args[4]);
+            }
+            var numberOfReplicas = 1;
+            if(args[5] != null){
+                numberOfReplicas = Integer.parseInt(args[5]);
+            }
 
             while (true) {
-                try (var socket = new Socket("localhost", 8080)) {
-                    if (Objects.equals(args[3], "yes")) {
-                        var channel = new BadChannel(socket, keyPair.getPrivate());
-                        var clientSide = new ClientSide(channel, keyPair.getPublic());
-                        System.out.println();
-                        System.out.println("Enter command");
-                        CommandParser.parseCommand(clientSide);
-                    } else {
-                        var channel = new ClientChannel(socket, keyPair.getPrivate());
-                        var clientSide = new ClientSide(channel, keyPair.getPublic());
-                        System.out.println();
-                        System.out.println("Enter command");
-                        CommandParser.parseCommand(clientSide);
+
+                System.out.println();
+                System.out.println("Enter command");
+                Command command = CommandParser.parseCommand();
+
+                ArrayList<Channel> clientChannels = new ArrayList<>();
+
+                for(int i = 1; i <= numberOfReplicas; i++){
+                    var currentPort = 8079 + i;
+                    System.out.println("Connecting to " + currentPort);
+                    try {
+                        var currentSocket = new Socket("localhost", currentPort);
+                        var currentChannel = new ClientChannel(currentSocket, keyPair.getPrivate());
+                        clientChannels.add(currentChannel);
+                    }
+                    catch (ConnectException e){
+                        System.out.println("Could not connect to " + currentPort + "...");
                     }
                 }
+
+                BroadcastChannel broadcastChannel = new BroadcastChannel(clientChannels);
+                Register register = new Register(broadcastChannel, quorumSize);
+
+                command.execCommand(register);
+
+                broadcastChannel.closeSocket();
             }
 
         } catch (Exception e) {

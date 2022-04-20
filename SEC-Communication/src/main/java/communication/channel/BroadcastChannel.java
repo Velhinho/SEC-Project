@@ -2,6 +2,7 @@ package communication.channel;
 
 import com.google.gson.JsonObject;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 public class BroadcastChannel {
@@ -37,5 +38,11 @@ public class BroadcastChannel {
             }
         }
         return msgs;
+    }
+
+    public void closeSocket() throws IOException {
+        for(int i = 0; i < channels.size(); i++){
+            this.channels.get(i).closeSocket();
+        }
     }
 }

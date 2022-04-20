@@ -64,7 +64,7 @@ public class CommandParser {
         }
     }
 
-    public static void parseCommand(ClientSide clientSide) throws Exception {
+    public static Command parseCommand() throws Exception {
         var commands = "open <KEY> \ncheck <KEY> \nsend <SENDER KEY> <RECEIVER KEY> <AMOUNT> \nreceive <SENDER KEY> <RECEIVER KEY> \naudit <KEY>";
         System.out.println("Commands:\n" + commands);
 
@@ -76,6 +76,6 @@ public class CommandParser {
                 .or(() -> receive(line))
                 .or(() -> audit(line))
                 .orElseThrow(RuntimeException::new);
-        command.execCommand(clientSide);
+        return command;
     }
 }

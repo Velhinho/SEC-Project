@@ -1,7 +1,7 @@
 package client.commands;
 
-import client.ClientSide;
+import client.Register;
 
 public interface Command {
-    void execCommand(ClientSide clientSide) throws Exception;
+    void execCommand(Register register) throws Exception;
 }

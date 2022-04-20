@@ -47,15 +47,17 @@ public class Register {
         return jsonWithTS;
     }
 
-    public void write(JsonObject jsonObject) {
+    public String write(JsonObject jsonObject) {
         var timestamp = getTimestamp().incrementAndGet();
         var writeMsg = makeWriteMsg(jsonObject, timestamp);
+        System.out.println(writeMsg);
         getBroadcastChannel().broadcastMsg(writeMsg);
 
         var acks = getBroadcastChannel().receiveMsgs();
         if (acks.size() <= getQuorumSize()) {
             throw new RuntimeException("Not enough ACKs");
         }
+        return acks.get(0).get("response").getAsString();
     }
 
     private static long generateReadId() {
@@ -67,16 +69,19 @@ public class Register {
         }
     }
 
-    private static JsonObject makeReadMsg(long readId) {
+    private static JsonObject makeReadMsg(JsonObject jsonObject, long readId) {
         // {"readId": 123}
         var jsonWithReadId = new JsonObject();
+        jsonWithReadId.add("jsonObject", jsonObject);
         jsonWithReadId.addProperty("readId", readId);
         return jsonWithReadId;
     }
 
     private boolean verifySignatures(ArrayList<JsonObject> jsonObjects) {
         for(JsonObject jsonObject : jsonObjects){
-            String type = jsonObject.get("type").getAsString();
+            System.out.println(jsonObject);
+            JsonObject response = jsonObject.get("response").getAsJsonObject();
+            String type = response.get("type").getAsString();
             if(type.equals("Check")){
                 if(!verifyCheckResponse(jsonObject)){
                     return false;
@@ -95,6 +100,9 @@ public class Register {
         Gson gson = new Gson();
         AuditResponse auditResponse =  gson.fromJson(jsonObject, AuditResponse.class);
         ArrayList<AcceptedTransfer> acceptedTransfers = auditResponse.getTransfers();
+        if (acceptedTransfers == null){
+            acceptedTransfers = new ArrayList<>();
+        }
         for(AcceptedTransfer acceptedTransfer : acceptedTransfers){
             PublicKey sender = KeyConversion.stringToKey(acceptedTransfer.sender());
             PublicKey receiver = KeyConversion.stringToKey(acceptedTransfer.receiver());
@@ -121,6 +129,10 @@ public class Register {
         Gson gson = new Gson();
         CheckResponse checkResponse =  gson.fromJson(jsonObject, CheckResponse.class);
         ArrayList<PendingTransfer> pendingTransfers = checkResponse.getTransfers();
+        System.out.println("pending_transfers : " + pendingTransfers);
+        if (pendingTransfers == null){
+            pendingTransfers = new ArrayList<>();
+        }
         for(PendingTransfer pendingTransfer : pendingTransfers){
             PublicKey sender = KeyConversion.stringToKey(pendingTransfer.sender());
             PublicKey receiver = KeyConversion.stringToKey(pendingTransfer.receiver());
@@ -144,9 +156,16 @@ public class Register {
     }
 
     private JsonObject highestValue(ArrayList<JsonObject> jsonObjects) {
-        //FIXME not checking highest timestamp
-        //FIXME not checking highest number of transfers
-        return jsonObjects.get(0);
+        JsonObject maxJsonObject = null;
+        long max_ts = 0;
+        for(JsonObject currentJsonObject : jsonObjects){
+            long current_ts = currentJsonObject.get("ts").getAsLong();
+            if(current_ts > max_ts){
+                max_ts = current_ts;
+                maxJsonObject = currentJsonObject;
+            }
+        }
+        return maxJsonObject;
     }
 
     private boolean hasQuorumSize(int size) {
@@ -168,9 +187,9 @@ public class Register {
         return hasQuorumSize(count);
     }
 
-    public JsonObject read() {
+    public JsonObject read(JsonObject object) {
         var readId = generateReadId();
-        var readMsg = makeReadMsg(readId);
+        var readMsg = makeReadMsg(object, readId);
         broadcastChannel.broadcastMsg(readMsg);
 
         var msgs = broadcastChannel.receiveMsgs();

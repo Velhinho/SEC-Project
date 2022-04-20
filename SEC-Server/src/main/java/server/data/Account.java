@@ -9,14 +9,14 @@ import java.util.Objects;
 public final class Account {
     private final String key;
     private int balance;
-    private ArrayList<Transfer> transfers = new ArrayList<>();
+    private ArrayList<AcceptedTransfer> acceptedTransfers = new ArrayList<>();
     private ArrayList<PendingTransfer> pendingTransfers = new ArrayList<>();
     private int ts;
 
     public Account(String key, int balance, int ts) {
         this.key = key;
         this.balance = balance;
-        this.transfers = new ArrayList<>();
+        this.acceptedTransfers = new ArrayList<>();
         this.pendingTransfers = new ArrayList<>();
         this.ts = ts;
     }
@@ -48,56 +48,34 @@ public final class Account {
         return "Account{" +
                 "key='" + key + '\'' +
                 ", balance=" + balance +
-                ", transfers=" + transfers +
+                ", transfers=" + acceptedTransfers +
                 ", pendingTransfers=" + pendingTransfers +
                 '}';
     }
 
-    public void addTransfer(Transfer transfer) {transfers.add(transfer);}
+    public void addTransfer(AcceptedTransfer transfer) {acceptedTransfers.add(transfer);}
 
-    public void addPendingTransfer(Transfer transfer){
-        pendingTransfers.add(new PendingTransfer(transfer));
+    public void addPendingTransfer(PendingTransfer transfer){
+        pendingTransfers.add(transfer);
     }
 
     public void changingBalance(int change){
         this.balance += change;
     }
 
-    public ArrayList<Transfer> getTransfers() {
-        return transfers;
+    public ArrayList<AcceptedTransfer> getAcceptedTransfers() {
+        return acceptedTransfers;
     }
 
     public ArrayList<PendingTransfer> getPendingTransfers() {
         return pendingTransfers;
     }
 
-    public void acceptPendingTransferAsSender(String receiver){
-        PendingTransfer senderAcceptedTransfer = null;
-        for (PendingTransfer senderPendingTransfer : pendingTransfers) {
-            if (senderPendingTransfer.sender().equals(key) && senderPendingTransfer.receiver().equals(receiver)) {
-                senderAcceptedTransfer = senderPendingTransfer;
-                break;
-            }
-        }
-        if (senderAcceptedTransfer != null){
-            changingBalance(-senderAcceptedTransfer.amount());
-            transfers.add(senderAcceptedTransfer.transfer());
-            pendingTransfers.remove(senderAcceptedTransfer);
-        }
+    public int getTs() {
+        return ts;
     }
 
-    public void acceptPendingTransferAsReceiver(String sender){
-        PendingTransfer receiverAcceptedTransfer = null;
-        for (PendingTransfer receiverPendingTransfer : pendingTransfers) {
-            if (receiverPendingTransfer.sender().equals(sender) && receiverPendingTransfer.receiver().equals(key)) {
-                receiverAcceptedTransfer = receiverPendingTransfer;
-                break;
-            }
-        }
-        if (receiverAcceptedTransfer != null){
-            changingBalance(receiverAcceptedTransfer.amount());
-            transfers.add(receiverAcceptedTransfer.transfer());
-            pendingTransfers.remove(receiverAcceptedTransfer);
-        }
+    public int getBalance() {
+        return balance;
     }
 }
