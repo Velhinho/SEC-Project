@@ -115,8 +115,8 @@ public class ServerSide {
             var wts = getWts(message);
 
             System.out.println("SendAmount: " + request);
-            var ts = getAccountTs(request.getSender());
             var stringResponse = sendAmount(request.getSender(), request.getReceiver(), request.getAmount(), request.getKey(), wts, signature);
+            var ts = getAccountTs(request.getSender());
             var responseJson = makeWriteResponse(stringResponse, ts);
             getChannel().sendMessage(responseJson);
 
@@ -126,7 +126,8 @@ public class ServerSide {
             System.out.println("receiveAmount: " + request);
 
             var stringResponse =  receiveAmount(request.getSender(), request.getReceiver(), request.getKey(), wts, signature);
-            var responseJson = makeResponse(stringResponse);
+            var ts = getAccountTs(request.getReceiver());
+            var responseJson = makeWriteResponse(stringResponse, ts);
             getChannel().sendMessage(responseJson);
         } else if (Objects.equals(requestType, "timeStamp")){
             var request = gson.fromJson(getRequest(requestJson), TimeStampRequest.class);

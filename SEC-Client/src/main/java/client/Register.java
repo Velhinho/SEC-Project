@@ -118,7 +118,7 @@ public class Register {
             String signature = acceptedTransfer.getSignature();
             long wts = acceptedTransfer.getWts();
             JsonObject requestJson = new JsonObject();
-            requestJson.addProperty("requestType", "sendAmount");
+            requestJson.addProperty("requestType", "receiveAmount");
             requestJson.add("request", JsonParser.parseString(gson.toJson(receiveAmountRequest)));
             JsonObject requestJsonWts = makeWriteMsg(requestJson, wts);
             try {
@@ -212,4 +212,81 @@ public class Register {
     public void setTimestamp(AtomicLong timestamp) {
         this.timestamp = timestamp;
     }
+
+    public void getMissingTransfers(JsonObject jsonObjectMaxTs, JsonObject otherJsonObject){
+        JsonObject response = jsonObjectMaxTs.get("response").getAsJsonObject();
+        String type = response.get("type").getAsString();
+        ArrayList<JsonObject> maxTSTransfers = new ArrayList<>();
+        if(type.equals("Audit")) {
+            maxTSTransfers = getAuditJsonObjects(jsonObjectMaxTs);
+        }
+        else if(type.equals("Check")){
+            maxTSTransfers = getCheckJsonObjects(jsonObjectMaxTs);
+        }
+        JsonObject otherResponse = otherJsonObject.get("response").getAsJsonObject();
+        String otherType = otherResponse.get("type").getAsString();
+        ArrayList<JsonObject> otherTSTransfers = new ArrayList<>();
+        if(otherType.equals("Audit")) {
+            otherTSTransfers = getAuditJsonObjects(jsonObjectMaxTs);
+        }
+        else if(otherType.equals("Check")){
+            otherTSTransfers = getCheckJsonObjects(jsonObjectMaxTs);
+        }
+        
+
+
+
+    }
+
+    public JsonObject getReceiveAmountRequestMessage(AcceptedTransfer acceptedTransfer, PublicKey sender, PublicKey receiver){
+        Gson gson = new Gson();
+        ReceiveAmountRequest receiveAmountRequest = new ReceiveAmountRequest(sender, receiver);
+        JsonObject requestJson = new JsonObject();
+        long wts = acceptedTransfer.getWts();
+        requestJson.addProperty("requestType", "receiveAmount");
+        requestJson.add("request", JsonParser.parseString(gson.toJson(receiveAmountRequest)));
+        JsonObject requestJsonWts = makeWriteMsg(requestJson, wts);
+        return requestJsonWts;
+    }
+
+    public ArrayList<JsonObject> getAuditJsonObjects(JsonObject jsonObject){
+        Gson gson = new Gson();
+        ArrayList<JsonObject> maxTSTransfers = new ArrayList<>();
+        AuditResponse auditResponse = gson.fromJson(jsonObject.get("response").getAsJsonObject(), AuditResponse.class);
+        ArrayList<AcceptedTransfer> acceptedTransfers = auditResponse.getTransfers();
+        for(AcceptedTransfer acceptedTransfer : acceptedTransfers) {
+            PublicKey sender = KeyConversion.stringToKey(acceptedTransfer.sender());
+            PublicKey receiver = KeyConversion.stringToKey(acceptedTransfer.receiver());
+            JsonObject requestJsonWts = getReceiveAmountRequestMessage(acceptedTransfer, sender, receiver);
+            maxTSTransfers.add(requestJsonWts);
+        }
+        return maxTSTransfers;
+    }
+
+    public ArrayList<JsonObject> getCheckJsonObjects(JsonObject jsonObject){
+        Gson gson = new Gson();
+        ArrayList<JsonObject> maxTSTransfers = new ArrayList<>();
+        CheckResponse checkResponse = gson.fromJson(jsonObject.get("response").getAsJsonObject(), CheckResponse.class);
+        ArrayList<PendingTransfer> pendingTransfers = checkResponse.getTransfers();
+        for(PendingTransfer pendingTransfer : pendingTransfers) {
+            PublicKey sender = KeyConversion.stringToKey(pendingTransfer.sender());
+            PublicKey receiver = KeyConversion.stringToKey(pendingTransfer.receiver());
+            JsonObject requestJsonWts = getSendAmountRequestMessage(pendingTransfer, sender, receiver, pendingTransfer.amount()
+            );
+            maxTSTransfers.add(requestJsonWts);
+        }
+        return maxTSTransfers;
+    }
+
+    public JsonObject getSendAmountRequestMessage(PendingTransfer pendingTransfer, PublicKey sender, PublicKey receiver, int amount){
+        Gson gson = new Gson();
+        SendAmountRequest sendAmountRequest = new SendAmountRequest(sender, receiver, amount);
+        JsonObject requestJson = new JsonObject();
+        long wts = pendingTransfer.getWts();
+        requestJson.addProperty("requestType", "sendAmount");
+        requestJson.add("request", JsonParser.parseString(gson.toJson(sendAmountRequest)));
+        JsonObject requestJsonWts = makeWriteMsg(requestJson, wts);
+        return requestJsonWts;
+    }
+
 }
