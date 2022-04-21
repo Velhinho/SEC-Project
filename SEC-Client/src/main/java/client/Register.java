@@ -13,6 +13,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class Register {
@@ -89,17 +90,16 @@ public class Register {
     }
 
     private boolean verifySignatures(ArrayList<JsonObject> jsonObjects) {
-        for(JsonObject jsonObject : jsonObjects){
+        for (JsonObject jsonObject : jsonObjects) {
             System.out.println(jsonObject);
             JsonObject response = jsonObject.get("response").getAsJsonObject();
             String type = response.get("type").getAsString();
-            if(type.equals("Check")){
-                if(!verifyCheckResponse(jsonObject)){
+            if (type.equals("Check")) {
+                if (!verifyCheckResponse(jsonObject)) {
                     return false;
                 }
-            }
-            else if(type.equals("Audit")){
-                if(!verifyAuditResponse(jsonObject)){
+            } else if (type.equals("Audit")) {
+                if (!verifyAuditResponse(jsonObject)) {
                     return false;
                 }
             }
@@ -109,11 +109,13 @@ public class Register {
 
     private boolean verifyAuditResponse(JsonObject jsonObject) {
         Gson gson = new Gson();
-        AuditResponse auditResponse =  gson.fromJson(jsonObject.get("response").getAsJsonObject(), AuditResponse.class);
+        AuditResponse auditResponse = gson.fromJson(jsonObject.get("response").getAsJsonObject(), AuditResponse.class);
         ArrayList<AcceptedTransfer> acceptedTransfers = auditResponse.getTransfers();
-        for(AcceptedTransfer acceptedTransfer : acceptedTransfers){
+        for (AcceptedTransfer acceptedTransfer : acceptedTransfers) {
             PublicKey sender = KeyConversion.stringToKey(acceptedTransfer.sender());
             PublicKey receiver = KeyConversion.stringToKey(acceptedTransfer.receiver());
+            Date timestamp = acceptedTransfer.getTimestamp();
+            String timestamp_string = AcceptedTransfer.DateToString(timestamp);
             ReceiveAmountRequest receiveAmountRequest = new ReceiveAmountRequest(sender, receiver);
             String signature = acceptedTransfer.getSignature();
             long wts = acceptedTransfer.getWts();
@@ -123,10 +125,10 @@ public class Register {
             JsonObject requestJsonWts = makeWriteMsg(requestJson, wts);
             try {
                 if (!StringSignature.verify(requestJsonWts.toString(), signature, receiver)) {
+                    System.out.println("Audit : Error on the Signatures");
                     return false;
                 }
-            }
-            catch (CryptoException e){
+            } catch (CryptoException e) {
                 System.exit(0);
             }
         }
@@ -136,26 +138,30 @@ public class Register {
     private boolean verifyCheckResponse(JsonObject jsonObject) {
         Gson gson = new Gson();
         System.out.println(jsonObject);
-        CheckResponse checkResponse =  gson.fromJson(jsonObject.get("response").getAsJsonObject(), CheckResponse.class);
+        CheckResponse checkResponse = gson.fromJson(jsonObject.get("response").getAsJsonObject(), CheckResponse.class);
         ArrayList<PendingTransfer> pendingTransfers = checkResponse.getTransfers();
-        System.out.println("pending_transfers : " + pendingTransfers);
-        System.out.println("balance : " + checkResponse.getBalance());
-        for(PendingTransfer pendingTransfer : pendingTransfers){
+        //System.out.println("pending_transfers : " + pendingTransfers);
+        //System.out.println("balance : " + checkResponse.getBalance());
+        for (PendingTransfer pendingTransfer : pendingTransfers) {
             PublicKey sender = KeyConversion.stringToKey(pendingTransfer.sender());
             PublicKey receiver = KeyConversion.stringToKey(pendingTransfer.receiver());
+            Date timestamp = pendingTransfer.getTimestamp();
+            String timestamp_string = PendingTransfer.DateToString(timestamp);
             SendAmountRequest sendAmountRequest = new SendAmountRequest(sender, receiver, pendingTransfer.amount());
             String signature = pendingTransfer.getSignature();
             long wts = pendingTransfer.getWts();
             JsonObject requestJson = new JsonObject();
             requestJson.addProperty("requestType", "sendAmount");
             requestJson.add("request", JsonParser.parseString(gson.toJson(sendAmountRequest)));
+            System.out.println(requestJson);
             JsonObject requestJsonWts = makeWriteMsg(requestJson, wts);
+            System.out.println("requestJsonWts : "  + requestJsonWts);
             try {
                 if (!StringSignature.verify(requestJsonWts.toString(), signature, sender)) {
+                    System.out.println("Check : Error on the Signatures");
                     return false;
                 }
-            }
-            catch (CryptoException e){
+            } catch (CryptoException e) {
                 System.exit(0);
             }
         }
@@ -165,9 +171,9 @@ public class Register {
     private JsonObject highestValue(ArrayList<JsonObject> jsonObjects) {
         JsonObject maxJsonObject = null;
         long max_ts = -1;
-        for(JsonObject currentJsonObject : jsonObjects){
+        for (JsonObject currentJsonObject : jsonObjects) {
             long current_ts = currentJsonObject.get("ts").getAsLong();
-            if(current_ts > max_ts){
+            if (current_ts > max_ts) {
                 max_ts = current_ts;
                 maxJsonObject = currentJsonObject;
             }
@@ -199,6 +205,63 @@ public class Register {
         var readMsg = makeReadMsg(object, readId);
         reading = true;
         broadcastChannel.broadcastMsg(readMsg);
+        var msgs = broadcastChannel.receiveMsgs();
+        System.out.println(msgs);
+        JsonObject highestValue;
+        if (checkReadIds(msgs, readId) && verifySignatures(msgs) && hasQuorumSize(msgs.size())) {
+            highestValue = highestValue(msgs);
+            ArrayList<JsonObject> necessaryMessages = getNecessaryMessages(highestValue);
+            System.out.println("Has validated signatures!");
+            for(JsonObject necessaryMessage : necessaryMessages){
+                System.out.println("Sending Necessary Messages : " + necessaryMessage);
+                broadcastChannel.broadcastDirectMsg(necessaryMessage);
+                var acks = broadcastChannel.receiveMsgs();
+                if (acks.size() <= getQuorumSize()) {
+                    throw new RuntimeException("Not enough ACKs");
+                }
+            }
+            reading = false;
+            return highestValue;
+        } else {
+            throw new RuntimeException("Too many crashes");
+        }
+    }
+
+    public ArrayList<JsonObject> getNecessaryMessages(JsonObject jsonObject){
+        ArrayList<JsonObject> necessaryMessages = new ArrayList<>();
+        JsonObject response = jsonObject.get("response").getAsJsonObject();
+        String type = response.get("type").getAsString();
+        Gson gson = new Gson();
+        if (type.equals("Check")) {
+            CheckResponse checkResponse = gson.fromJson(jsonObject.get("response").getAsJsonObject(), CheckResponse.class);
+            ArrayList<PendingTransfer> pendingTransfers = checkResponse.getTransfers();
+            for(PendingTransfer pendingTransfer : pendingTransfers) {
+                PublicKey sender = KeyConversion.stringToKey(pendingTransfer.sender());
+                PublicKey receiver = KeyConversion.stringToKey(pendingTransfer.receiver());
+                JsonObject sendAmountRequest = getSendAmountRequestMessage(pendingTransfer, sender, receiver, pendingTransfer.amount());
+                sendAmountRequest.addProperty("signature", pendingTransfer.getSignature());
+                necessaryMessages.add(sendAmountRequest);
+            }
+        }
+        else if (type.equals("Audit")){
+            AuditResponse auditResponse = gson.fromJson(jsonObject.get("response").getAsJsonObject(), AuditResponse.class);
+            ArrayList<AcceptedTransfer> acceptedTransfers = auditResponse.getTransfers();
+            for(AcceptedTransfer acceptedTransfer : acceptedTransfers) {
+                PublicKey sender = KeyConversion.stringToKey(acceptedTransfer.sender());
+                PublicKey receiver = KeyConversion.stringToKey(acceptedTransfer.receiver());
+                JsonObject receiverAmountRequest = getReceiveAmountRequestMessage(acceptedTransfer, sender, receiver);
+                receiverAmountRequest.addProperty("signature", acceptedTransfer.getReceiverSignature());
+                necessaryMessages.add(receiverAmountRequest);
+            }
+        }
+        return necessaryMessages;
+    }
+
+    public JsonObject readTS(JsonObject object) {
+        var readId = generateReadId();
+        var readMsg = makeReadMsg(object, readId);
+        reading = true;
+        broadcastChannel.broadcastMsg(readMsg);
 
         var msgs = broadcastChannel.receiveMsgs();
         System.out.println(msgs);
@@ -212,6 +275,39 @@ public class Register {
     public void setTimestamp(AtomicLong timestamp) {
         this.timestamp = timestamp;
     }
+
+    public JsonObject getSendAmountRequestMessage(PendingTransfer pendingTransfer, PublicKey sender, PublicKey receiver, int amount){
+        Gson gson = new Gson();
+        Date timestamp = pendingTransfer.getTimestamp();
+        String timestamp_string = PendingTransfer.DateToString(timestamp);
+        SendAmountRequest sendAmountRequest = new SendAmountRequest(sender, receiver, amount);
+        JsonObject requestJson = new JsonObject();
+        long wts = pendingTransfer.getWts();
+        requestJson.addProperty("requestType", "sendAmount");
+        requestJson.add("request", JsonParser.parseString(gson.toJson(sendAmountRequest)));
+        JsonObject requestJsonWts = makeWriteMsg(requestJson, wts);
+        return requestJsonWts;
+    }
+
+    public JsonObject getReceiveAmountRequestMessage(AcceptedTransfer acceptedTransfer, PublicKey sender, PublicKey receiver){
+        Gson gson = new Gson();
+        Date timestamp = acceptedTransfer.getTimestamp();
+        String timestamp_string = AcceptedTransfer.DateToString(timestamp);
+        ReceiveAmountRequest receiveAmountRequest = new ReceiveAmountRequest(sender, receiver);
+        JsonObject requestJson = new JsonObject();
+        long wts = acceptedTransfer.getWts();
+        requestJson.addProperty("requestType", "receiveAmount");
+        requestJson.add("request", JsonParser.parseString(gson.toJson(receiveAmountRequest)));
+        JsonObject requestJsonWts = makeWriteMsg(requestJson, wts);
+        return requestJsonWts;
+    }
+
+
+
+
+}
+
+ /*
 
     public void getMissingTransfers(JsonObject jsonObjectMaxTs, JsonObject otherJsonObject){
         JsonObject response = jsonObjectMaxTs.get("response").getAsJsonObject();
@@ -232,7 +328,8 @@ public class Register {
         else if(otherType.equals("Check")){
             otherTSTransfers = getCheckJsonObjects(jsonObjectMaxTs);
         }
-        
+        ArrayList<JsonObject> requiredTransfers =
+
 
 
 
@@ -240,7 +337,9 @@ public class Register {
 
     public JsonObject getReceiveAmountRequestMessage(AcceptedTransfer acceptedTransfer, PublicKey sender, PublicKey receiver){
         Gson gson = new Gson();
-        ReceiveAmountRequest receiveAmountRequest = new ReceiveAmountRequest(sender, receiver);
+        Date timestamp = acceptedTransfer.getTimestamp();
+        String timestamp_string = AcceptedTransfer.DateToString(timestamp);
+        ReceiveAmountRequest receiveAmountRequest = new ReceiveAmountRequest(sender, receiver, timestamp_string);
         JsonObject requestJson = new JsonObject();
         long wts = acceptedTransfer.getWts();
         requestJson.addProperty("requestType", "receiveAmount");
@@ -278,9 +377,12 @@ public class Register {
         return maxTSTransfers;
     }
 
+
     public JsonObject getSendAmountRequestMessage(PendingTransfer pendingTransfer, PublicKey sender, PublicKey receiver, int amount){
         Gson gson = new Gson();
-        SendAmountRequest sendAmountRequest = new SendAmountRequest(sender, receiver, amount);
+        Date timestamp = pendingTransfer.getTimestamp();
+        String timestamp_string = PendingTransfer.DateToString(timestamp);
+        SendAmountRequest sendAmountRequest = new SendAmountRequest(sender, receiver, amount, timestamp_string);
         JsonObject requestJson = new JsonObject();
         long wts = pendingTransfer.getWts();
         requestJson.addProperty("requestType", "sendAmount");
@@ -289,4 +391,15 @@ public class Register {
         return requestJsonWts;
     }
 
-}
+    private long lowestValue(ArrayList<JsonObject> jsonObjects) {
+        long min_ts = Long.MAX_VALUE;
+        for (JsonObject currentJsonObject : jsonObjects) {
+            long current_ts = currentJsonObject.get("ts").getAsLong();
+            if (current_ts < min_ts) {
+                min_ts = current_ts;
+            }
+        }
+        return min_ts;
+    }
+
+     */

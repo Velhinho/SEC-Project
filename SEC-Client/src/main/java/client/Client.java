@@ -56,7 +56,7 @@ public class Client {
                 numberOfReplicas = Integer.parseInt(args[5]);
             }
 
-            ArrayList<Channel> clientChannels = new ArrayList<>();
+            ArrayList<ClientChannel> clientChannels = new ArrayList<>();
 
             for(int i = 1; i <= numberOfReplicas; i++){
                 var currentPort = 8079 + i;
@@ -79,9 +79,11 @@ public class Client {
             JsonObject requestJson = new JsonObject();
             requestJson.addProperty("requestType", "timeStamp");
             requestJson.add("request", JsonParser.parseString(gson.toJson(timeStampRequest)));
-            JsonObject response = register.read(requestJson).get("response").getAsJsonObject();
+            JsonObject response = register.readTS(requestJson).get("response").getAsJsonObject();
             register.setTimestamp(new AtomicLong(response.get("ts").getAsLong()));
             System.out.println("response : " + response);
+
+            broadcastChannel.closeSocket();
 
             while (true) {
 

@@ -16,26 +16,30 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.concurrent.Executors;
 
-public class Server {
-    private static void serveClient(Socket client, KeyPair keyPair, ServerData serverData) throws RuntimeException {
+public class ServerTest {
+
+    private final KeyPair keyPair;
+    private final int replicaNumber;
+    private final String reset;
+
+    public ServerTest(KeyPair keyPair, int replicaNumber, String reset){
+        this.keyPair = keyPair;
+        this.replicaNumber = replicaNumber;
+        this.reset = reset;
+    }
+
+    private void serveClient(Socket client, KeyPair keyPair, ServerData serverData) throws RuntimeException {
         try (client) {
             var channel = new ServerChannel(client, keyPair.getPrivate());
             var serverSide = new ServerSide(channel, keyPair, serverData);
-            while (!serverSide.getChannel().getSocket().isClosed()) {
-                try {
-                    serverSide.processRequest();
-                }
-                catch (NullPointerException e){
-                    serverSide.getChannel().getSocket().close();
-                }
-            }
+            serverSide.processRequest();
         } catch (RuntimeException | ChannelException | IOException e) {
             e.printStackTrace(System.err);
             System.err.println(e.getMessage());
         }
     }
 
-    private static KeyPair getKeyPair(String arg0, String arg1) throws RuntimeException {
+    private KeyPair getKeyPair(String arg0, String arg1) throws RuntimeException {
         try {
             KeyStore ks = KeyStore.getInstance("JKS");
             ClassLoader classloader = Thread.currentThread().getContextClassLoader();
@@ -49,24 +53,9 @@ public class Server {
         }
     }
 
-    public static void main(String[] args) {
+    public void run(String[] args) {
         System.out.println("Starting Server");
         var executorService = Executors.newCachedThreadPool();
-
-        var keyPair = getKeyPair(args[0], args[1]);
-        System.out.println(KeyConversion.keyToString(keyPair.getPublic()));
-
-        int replicaNumber = 1;
-
-        if(args[2] != null){
-            replicaNumber = Integer.parseInt(args[2]);
-        }
-
-        String reset = "no";
-
-        if(args[3] != null){
-            reset = args[3];
-        }
 
         int port = 8079 + replicaNumber;
 

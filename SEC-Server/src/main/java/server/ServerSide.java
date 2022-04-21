@@ -6,6 +6,7 @@ import com.google.gson.JsonParser;
 
 import communication.channel.Channel;
 import communication.channel.ChannelException;
+import communication.channel.ServerChannel;
 import communication.crypto.KeyConversion;
 import communication.messages.*;
 //import server.data.ServerData;
@@ -18,15 +19,15 @@ import java.security.KeyPair;
 import java.util.*;
 
 public class ServerSide {
-    private final Channel channel;
+    private final ServerChannel channel;
     private final KeyPair keyPair;
     private final ServerData serverData;
 
-    public Channel getChannel() {
+    public ServerChannel getChannel() {
         return channel;
     }
 
-    public ServerSide(Channel channel, KeyPair keyPair, ServerData serverData) {
+    public ServerSide(ServerChannel channel, KeyPair keyPair, ServerData serverData) {
         this.channel = channel;
         this.keyPair = keyPair;
         this.serverData = serverData;

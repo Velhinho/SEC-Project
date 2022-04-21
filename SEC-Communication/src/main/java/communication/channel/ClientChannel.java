@@ -42,9 +42,20 @@ public class ClientChannel implements Channel {
         try {
             var signature = StringSignature.sign(jsonObject.toString(), getPrivateKey());
             var message = appendSignature(jsonObject, signature);
-
+            System.out.println("before sending message : " + message);
             var writer = new PrintWriter(getSocket().getOutputStream());
             writer.println(message);
+            writer.flush();
+        } catch (Exception exception) {
+            throw new ChannelException(exception.getMessage());
+        }
+    }
+
+    public void sendDirectMessage(JsonObject jsonObject) throws ChannelException {
+        try {
+            System.out.println("before sending message : " + jsonObject);
+            var writer = new PrintWriter(getSocket().getOutputStream());
+            writer.println(jsonObject);
             writer.flush();
         } catch (Exception exception) {
             throw new ChannelException(exception.getMessage());

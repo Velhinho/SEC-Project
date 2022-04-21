@@ -6,13 +6,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 public class BroadcastChannel {
-    private final ArrayList<Channel> channels;
+    private final ArrayList<ClientChannel> channels;
 
-    public BroadcastChannel(ArrayList<Channel> channels) {
+    public BroadcastChannel(ArrayList<ClientChannel> channels) {
         this.channels = channels;
     }
 
-    public ArrayList<Channel> getChannels() {
+    public ArrayList<ClientChannel> getChannels() {
         return channels;
     }
 
@@ -20,6 +20,16 @@ public class BroadcastChannel {
         for (var c : getChannels()) {
             try {
                 c.sendMessage(jsonObject);
+            } catch (ChannelException e) {
+                e.printStackTrace(System.err);
+            }
+        }
+    }
+
+    public void broadcastDirectMsg(JsonObject jsonObject) {
+        for (var c : getChannels()) {
+            try {
+                c.sendDirectMessage(jsonObject);
             } catch (ChannelException e) {
                 e.printStackTrace(System.err);
             }

@@ -196,7 +196,7 @@ public class ServerData {
             return "The sender account doesn't exist!";
         }
         long ts = senderAccount.getTs();
-        if(wts < ts){
+        if((wts <= ts)){
             return "Wrong ts!";
         }
         int sender_balance = senderAccount.balance();
@@ -360,12 +360,14 @@ public class ServerData {
         if (senderAccount == null){
             return "The sender account doesn't exist!";
         }
+        Date timestamp = new Date(System.currentTimeMillis());
+        String timestamp_string = AcceptedTransfer.DateToString(timestamp);
         Account receiverAccount = getAccount(receiver);
         if (receiverAccount == null){
             return "The receiver account doesn't exist!";
         }
         long ts = receiverAccount.getTs();
-        if(wts < ts){
+        if(wts <= ts){
             return "Wrong ts!";
         }
         List<PendingTransfer> transfers =  receiverAccount.getPendingTransfers()
@@ -412,7 +414,7 @@ public class ServerData {
             pstmt3.setString(1, sender);
             pstmt3.setString(2, receiver);
             pstmt3.setInt(3, pendingTransfer.amount());
-            pstmt3.setString(4, AcceptedTransfer.DateToString(pendingTransfer.getTimestamp()));
+            pstmt3.setString(4, timestamp_string);
             pstmt3.setString(5, pendingTransfer.getSignature());
             pstmt3.setString(6, signature);
             pstmt3.setLong(7, wts);
