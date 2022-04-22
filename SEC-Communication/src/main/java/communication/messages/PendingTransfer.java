@@ -6,8 +6,8 @@ import java.util.Objects;
 
 public final class PendingTransfer extends Transfer {
 
-    public PendingTransfer(String sender, String receiver, int amount, String timestamp, String signature, long wts) {
-        super(sender,receiver,amount,timestamp,signature, wts);
+    public PendingTransfer(String sender, String receiver, int amount, String timestamp, String signature, long wts, long rid) {
+        super(sender,receiver,amount,timestamp,signature, wts, rid);
     }
 
 

@@ -15,6 +15,7 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 public class Register {
     private AtomicLong timestamp = new AtomicLong(0);
@@ -48,11 +49,12 @@ public class Register {
         return quorumSize;
     }
 
-    private static JsonObject makeWriteMsg(JsonObject jsonObject, long timestamp) {
+    private static JsonObject makeWriteMsg(JsonObject jsonObject, long timestamp, long readId) {
         // SendAmountRequest = {"sender": ASD, "receiver": SDF, "amount": 1}
         // jsonWithTS = {"jsonObject": {"sender": ASD, "receiver": SDF, "amount": 1}, "wts": 3}
 
         var jsonWithTS = new JsonObject();
+        jsonWithTS.addProperty("readId", readId);
         jsonWithTS.add("jsonObject", jsonObject);
         jsonWithTS.addProperty("wts", timestamp);
         return jsonWithTS;
@@ -61,7 +63,8 @@ public class Register {
     public String write(JsonObject jsonObject) {
         var timestamp = getTimestamp().incrementAndGet();
         System.out.println(timestamp);
-        var writeMsg = makeWriteMsg(jsonObject, timestamp);
+        long readId = generateReadId();
+        var writeMsg = makeWriteMsg(jsonObject, timestamp, readId);
         System.out.println(writeMsg);
         getBroadcastChannel().broadcastMsg(writeMsg);
 
@@ -69,8 +72,13 @@ public class Register {
         if (acks.size() <= getQuorumSize()) {
             throw new RuntimeException("Not enough ACKs");
         }
+        System.out.println(acks);
+        if(!checkReadIds(acks, readId)){
+            throw new RuntimeException("Wrong ReadIds received");
+        }
         return acks.get(0).get("response").getAsString();
     }
+
 
     private static long generateReadId() {
         try {
@@ -114,15 +122,14 @@ public class Register {
         for (AcceptedTransfer acceptedTransfer : acceptedTransfers) {
             PublicKey sender = KeyConversion.stringToKey(acceptedTransfer.sender());
             PublicKey receiver = KeyConversion.stringToKey(acceptedTransfer.receiver());
-            Date timestamp = acceptedTransfer.getTimestamp();
-            String timestamp_string = AcceptedTransfer.DateToString(timestamp);
             ReceiveAmountRequest receiveAmountRequest = new ReceiveAmountRequest(sender, receiver);
-            String signature = acceptedTransfer.getSignature();
+            String signature = acceptedTransfer.getReceiverSignature();
             long wts = acceptedTransfer.getWts();
+            long rid = acceptedTransfer.getRid();
             JsonObject requestJson = new JsonObject();
             requestJson.addProperty("requestType", "receiveAmount");
             requestJson.add("request", JsonParser.parseString(gson.toJson(receiveAmountRequest)));
-            JsonObject requestJsonWts = makeWriteMsg(requestJson, wts);
+            JsonObject requestJsonWts = makeWriteMsg(requestJson, wts, rid);
             try {
                 if (!StringSignature.verify(requestJsonWts.toString(), signature, receiver)) {
                     System.out.println("Audit : Error on the Signatures");
@@ -150,11 +157,12 @@ public class Register {
             SendAmountRequest sendAmountRequest = new SendAmountRequest(sender, receiver, pendingTransfer.amount());
             String signature = pendingTransfer.getSignature();
             long wts = pendingTransfer.getWts();
+            long rid = pendingTransfer.getRid();
             JsonObject requestJson = new JsonObject();
             requestJson.addProperty("requestType", "sendAmount");
             requestJson.add("request", JsonParser.parseString(gson.toJson(sendAmountRequest)));
             System.out.println(requestJson);
-            JsonObject requestJsonWts = makeWriteMsg(requestJson, wts);
+            JsonObject requestJsonWts = makeWriteMsg(requestJson, wts, rid);
             System.out.println("requestJsonWts : "  + requestJsonWts);
             try {
                 if (!StringSignature.verify(requestJsonWts.toString(), signature, sender)) {
@@ -210,14 +218,19 @@ public class Register {
         JsonObject highestValue;
         if (checkReadIds(msgs, readId) && verifySignatures(msgs) && hasQuorumSize(msgs.size())) {
             highestValue = highestValue(msgs);
-            ArrayList<JsonObject> necessaryMessages = getNecessaryMessages(highestValue);
+            long lowestValue = lowestValue(msgs);
+            ArrayList<JsonObject> necessaryMessages = getNecessaryMessages(highestValue, lowestValue);
             System.out.println("Has validated signatures!");
             for(JsonObject necessaryMessage : necessaryMessages){
                 System.out.println("Sending Necessary Messages : " + necessaryMessage);
+                readId = necessaryMessage.get("readId").getAsLong();
                 broadcastChannel.broadcastDirectMsg(necessaryMessage);
                 var acks = broadcastChannel.receiveMsgs();
                 if (acks.size() <= getQuorumSize()) {
                     throw new RuntimeException("Not enough ACKs");
+                }
+                if (!checkReadIds(acks, readId)) {
+                    throw new RuntimeException("Wrong ReadIds received");
                 }
             }
             reading = false;
@@ -227,7 +240,18 @@ public class Register {
         }
     }
 
-    public ArrayList<JsonObject> getNecessaryMessages(JsonObject jsonObject){
+    private long lowestValue(ArrayList<JsonObject> jsonObjects) {
+        long min_ts = Long.MAX_VALUE;
+        for (JsonObject currentJsonObject : jsonObjects) {
+            long current_ts = currentJsonObject.get("ts").getAsLong();
+            if (current_ts < min_ts) {
+                min_ts = current_ts;
+            }
+        }
+        return min_ts;
+    }
+
+    public ArrayList<JsonObject> getNecessaryMessages(JsonObject jsonObject, long ts){
         ArrayList<JsonObject> necessaryMessages = new ArrayList<>();
         JsonObject response = jsonObject.get("response").getAsJsonObject();
         String type = response.get("type").getAsString();
@@ -235,6 +259,7 @@ public class Register {
         if (type.equals("Check")) {
             CheckResponse checkResponse = gson.fromJson(jsonObject.get("response").getAsJsonObject(), CheckResponse.class);
             ArrayList<PendingTransfer> pendingTransfers = checkResponse.getTransfers();
+            pendingTransfers = new ArrayList<>(pendingTransfers.stream().filter(d -> d.getWts() >= ts).collect(Collectors.toList()));
             for(PendingTransfer pendingTransfer : pendingTransfers) {
                 PublicKey sender = KeyConversion.stringToKey(pendingTransfer.sender());
                 PublicKey receiver = KeyConversion.stringToKey(pendingTransfer.receiver());
@@ -246,6 +271,7 @@ public class Register {
         else if (type.equals("Audit")){
             AuditResponse auditResponse = gson.fromJson(jsonObject.get("response").getAsJsonObject(), AuditResponse.class);
             ArrayList<AcceptedTransfer> acceptedTransfers = auditResponse.getTransfers();
+            acceptedTransfers = new ArrayList<>(acceptedTransfers.stream().filter(d -> d.getWts() >= ts).collect(Collectors.toList()));
             for(AcceptedTransfer acceptedTransfer : acceptedTransfers) {
                 PublicKey sender = KeyConversion.stringToKey(acceptedTransfer.sender());
                 PublicKey receiver = KeyConversion.stringToKey(acceptedTransfer.receiver());
@@ -283,9 +309,10 @@ public class Register {
         SendAmountRequest sendAmountRequest = new SendAmountRequest(sender, receiver, amount);
         JsonObject requestJson = new JsonObject();
         long wts = pendingTransfer.getWts();
+        long rid = pendingTransfer.getRid();
         requestJson.addProperty("requestType", "sendAmount");
         requestJson.add("request", JsonParser.parseString(gson.toJson(sendAmountRequest)));
-        JsonObject requestJsonWts = makeWriteMsg(requestJson, wts);
+        JsonObject requestJsonWts = makeWriteMsg(requestJson, wts, rid);
         return requestJsonWts;
     }
 
@@ -296,9 +323,10 @@ public class Register {
         ReceiveAmountRequest receiveAmountRequest = new ReceiveAmountRequest(sender, receiver);
         JsonObject requestJson = new JsonObject();
         long wts = acceptedTransfer.getWts();
+        long rid = acceptedTransfer.getRid();
         requestJson.addProperty("requestType", "receiveAmount");
         requestJson.add("request", JsonParser.parseString(gson.toJson(receiveAmountRequest)));
-        JsonObject requestJsonWts = makeWriteMsg(requestJson, wts);
+        JsonObject requestJsonWts = makeWriteMsg(requestJson, wts, rid);
         return requestJsonWts;
     }
 

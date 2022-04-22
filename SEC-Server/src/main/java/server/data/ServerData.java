@@ -89,6 +89,7 @@ public class ServerData {
                             "timestamp         TEXT NOT NULL,\n" +
                             "sender_signature TEXT NOT NULL,\n" +
                             "receiver_signature TEXT NOT NULL,\n" +
+                            "rid INTEGER  NOT NULL,\n" +
                             "wts INTEGER  NOT NULL);";
             preparedStatement1 = c.prepareStatement(sql_transfers);
             preparedStatement1.execute();
@@ -101,6 +102,7 @@ public class ServerData {
                                    "amount            INT     NOT NULL,\n" +
                                    "timestamp         TEXT NOT NULL,\n" +
                                    "sender_signature TEXT NOT NULL,\n" +
+                                   "rid INTEGER  NOT NULL,\n" +
                                    "wts INTEGER NOT NULL);";
             preparedStatement2 = c.prepareStatement(sql_pendingTransfers);
             preparedStatement2.execute();
@@ -182,7 +184,7 @@ public class ServerData {
         }
     }
 
-    public String sendAmount(String sender, String receiver, int amount, long wts, String signature){
+    public String sendAmount(String sender, String receiver, int amount, long wts, String signature, long rid){
         if (sender.equals(receiver)) {
             return "Can't send money to itself!";
         }
@@ -210,7 +212,7 @@ public class ServerData {
         }
         PreparedStatement pstmt = null;
         try{
-            String sql_insert = "INSERT INTO pending_transfers (source_key, receiver_key, amount, timestamp, sender_signature, wts) VALUES (?, ?, ?, ?, ?, ?);";
+            String sql_insert = "INSERT INTO pending_transfers (source_key, receiver_key, amount, timestamp, sender_signature, wts, rid) VALUES (?, ?, ?, ?, ?, ? , ?);";
             pstmt = c.prepareStatement(sql_insert);
             pstmt.setString(1, sender);
             pstmt.setString(2, receiver);
@@ -218,6 +220,7 @@ public class ServerData {
             pstmt.setString(4,timestamp_string);
             pstmt.setString(5, signature);
             pstmt.setLong(6, wts);
+            pstmt.setLong(7, rid);
             pstmt.executeUpdate();
             pstmt.close();
 
@@ -293,7 +296,8 @@ public class ServerData {
                 String senderSignature = rs2.getString("sender_signature");
                 String receiverSignature = rs2.getString("receiver_signature");
                 long wts = rs2.getLong("wts");
-                acceptedTransfer = new AcceptedTransfer(source_key, receiver_key, amount, timestamp, senderSignature, receiverSignature, wts );
+                long rid = rs2.getLong("rid");
+                acceptedTransfer = new AcceptedTransfer(source_key, receiver_key, amount, timestamp, senderSignature, receiverSignature, wts, rid );
                 account.addTransfer(acceptedTransfer);
             }
 
@@ -309,7 +313,8 @@ public class ServerData {
                 String timestamp = rs3.getString("timestamp");
                 String senderSignature = rs3.getString("sender_signature");
                 long wts = rs3.getLong("wts");
-                pendingTransfer = new PendingTransfer(source_key, receiver_key, amount, timestamp, senderSignature, wts);
+                long rid = rs3.getLong("rid");
+                pendingTransfer = new PendingTransfer(source_key, receiver_key, amount, timestamp, senderSignature, wts, rid);
                 account.addPendingTransfer(pendingTransfer);
             }
 
@@ -352,7 +357,7 @@ public class ServerData {
         return account;
     }
 
-    public String receiveAmount(String sender, String receiver, long wts, String signature) {
+    public String receiveAmount(String sender, String receiver, long wts, String signature, long rid) {
         if (sender.equals(receiver)) {
             return "You can't accept a transfer from yourself to yourself!";
         }
@@ -409,7 +414,7 @@ public class ServerData {
             pstmt2.executeUpdate();
             pstmt2.close();
 
-            sql_insert_transfers = "INSERT INTO transfers (source_key, receiver_key, amount, timestamp, sender_signature, receiver_signature, wts) VALUES (?,?,?,?,?,?,?);";
+            sql_insert_transfers = "INSERT INTO transfers (source_key, receiver_key, amount, timestamp, sender_signature, receiver_signature, wts, rid) VALUES (?,?,?,?,?,?,?,?);";
             pstmt3 = c.prepareStatement(sql_insert_transfers);
             pstmt3.setString(1, sender);
             pstmt3.setString(2, receiver);
@@ -418,6 +423,7 @@ public class ServerData {
             pstmt3.setString(5, pendingTransfer.getSignature());
             pstmt3.setString(6, signature);
             pstmt3.setLong(7, wts);
+            pstmt3.setLong(8, rid);
 
             pstmt3.executeUpdate();
             pstmt3.close();

@@ -53,13 +53,15 @@ public class ServerSide {
         return responseJson;
     }
 
-    private JsonObject makeWriteResponse(Object response, long ts){
+    private JsonObject makeWriteResponse(Object response, long ts, long rid){
         var gson = new Gson();
         var responseJson = new JsonObject();
         responseJson.add("response", JsonParser.parseString(gson.toJson(response)));
         var key = KeyConversion.keyToString(keyPair.getPublic());
         responseJson.addProperty("key", key);
+        responseJson.addProperty("readId", rid);
         responseJson.addProperty("ts", ts);
+
         return responseJson;
     }
 
@@ -106,29 +108,34 @@ public class ServerSide {
 
         } else if (Objects.equals(requestType, "openAccount")) {
             var request = gson.fromJson(getRequest(requestJson), OpenAccountRequest.class);
+            var rid = getRid(message);
+            var ts = getAccountTs(request.getKey());
+
             System.out.println("openAccount: " + request);
             var stringResponse = openAccount(request.getKey());
-            var responseJson = makeResponse(stringResponse);
+            var responseJson = makeWriteResponse(stringResponse,ts,rid);
             getChannel().sendMessage(responseJson);
 
         } else if (Objects.equals(requestType, "sendAmount")) {
             var request = gson.fromJson(getRequest(requestJson), SendAmountRequest.class);
             var wts = getWts(message);
+            var rid = getRid(message);
 
             System.out.println("SendAmount: " + request);
-            var stringResponse = sendAmount(request.getSender(), request.getReceiver(), request.getAmount(), request.getKey(), wts, signature);
+            var stringResponse = sendAmount(request.getSender(), request.getReceiver(), request.getAmount(), request.getKey(), wts, signature, rid);
             var ts = getAccountTs(request.getSender());
-            var responseJson = makeWriteResponse(stringResponse, ts);
+            var responseJson = makeWriteResponse(stringResponse, ts, rid);
             getChannel().sendMessage(responseJson);
 
         } else if (Objects.equals(requestType, "receiveAmount")) {
             var request = gson.fromJson(getRequest(requestJson), ReceiveAmountRequest.class);
             var wts = getWts(message);
+            var rid = getRid(message);
             System.out.println("receiveAmount: " + request);
 
-            var stringResponse =  receiveAmount(request.getSender(), request.getReceiver(), request.getKey(), wts, signature);
+            var stringResponse =  receiveAmount(request.getSender(), request.getReceiver(), request.getKey(), wts, signature, rid);
             var ts = getAccountTs(request.getReceiver());
-            var responseJson = makeWriteResponse(stringResponse, ts);
+            var responseJson = makeWriteResponse(stringResponse, ts, rid);
             getChannel().sendMessage(responseJson);
         } else if (Objects.equals(requestType, "timeStamp")){
             var request = gson.fromJson(getRequest(requestJson), TimeStampRequest.class);
@@ -173,11 +180,11 @@ public class ServerSide {
         return json;
     }
 
-    private String sendAmount(String sender, String receiver, int amount, String key, long wts, String signature) {
+    private String sendAmount(String sender, String receiver, int amount, String key, long wts, String signature, long rid) {
         if (!key.equals(sender)){
             return "The signature of the request and the sender's key doesn't match!";
         }
-        return serverData.sendAmount(sender, receiver, amount, wts, signature);
+        return serverData.sendAmount(sender, receiver, amount, wts, signature, rid);
     }
 
     private String checkAccount(String publicKey){
@@ -197,11 +204,11 @@ public class ServerSide {
         return json;
     }
 
-    private String receiveAmount(String senderKey, String receiverKey, String key, long wts, String signature){
+    private String receiveAmount(String senderKey, String receiverKey, String key, long wts, String signature, long rid){
         if (!key.equals(receiverKey)){
             return "The signature of the request and the receiver's key doesn't match!";
         }
-        return serverData.receiveAmount(senderKey, receiverKey, wts, signature);
+        return serverData.receiveAmount(senderKey, receiverKey, wts, signature, rid);
     }
 
     private long getAccountTs(String publicKey){

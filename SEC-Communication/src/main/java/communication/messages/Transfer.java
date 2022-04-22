@@ -10,14 +10,16 @@ public abstract class Transfer implements Comparable<Transfer> {
     private final int amount;
     private final Date timestamp;
     private final long wts;
+    private final long rid;
 
-    public Transfer(String sender, String receiver, int amount, String timestamp, String signature, long wts){
+    public Transfer(String sender, String receiver, int amount, String timestamp, String signature, long wts, long rid){
         this.sender = sender;
         this.receiver = receiver;
         this.amount = amount;
         this.timestamp = stringToDate(timestamp);
         this.signature = signature;
         this.wts = wts;
+        this.rid = rid;
     }
 
     public static String DateToString(Date date){
@@ -76,5 +78,9 @@ public abstract class Transfer implements Comparable<Transfer> {
     @Override
     public int compareTo(Transfer t) {
         return getTimestamp().compareTo(t.getTimestamp());
+    }
+
+    public long getRid() {
+        return rid;
     }
 }

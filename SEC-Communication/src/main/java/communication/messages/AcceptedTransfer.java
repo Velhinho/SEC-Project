@@ -8,8 +8,8 @@ public final class AcceptedTransfer extends Transfer {
 
     private final String receiverSignature;
 
-    public AcceptedTransfer(String sender, String receiver, int amount, String timestamp, String senderSignature, String receiverSignature, long wts) {
-        super(sender,receiver,amount,timestamp,senderSignature, wts);
+    public AcceptedTransfer(String sender, String receiver, int amount, String timestamp, String senderSignature, String receiverSignature, long wts, long rid) {
+        super(sender,receiver,amount,timestamp,senderSignature, wts, rid);
         this.receiverSignature = receiverSignature;
     }
 
