@@ -5,8 +5,7 @@
 * Make sure you have sqlite3 installed. You can install the latest version with ``sudo apt-get install sqlite3``
 * Then do ``mvn install`` in the SEC-Project directory 
 * And then do ``mvn install`` in the SEC-Communication directory
-* To start the server go to the SEC-Server directory and do ``mvn compile exec:java -DreplicaNumber=<N>`` 
-where <N> should the number of the replica, e.g. ``mvn compile exec:java -DreplicaNumber=2`` for the second replica
+* To start the servers go to the SEC-Server directory and execute the ``run_servers.sh`` script. You may need to give execution permissions beforehand with ``sudo chmod +x run_servers.sh``. You should adapt the script to use your terminal of choice. Default terminal is ``konsole``.
 * To start a client go to the SEC-Client directory and do 
 ``mvn compile exec:java -DclientNumber=<C> -DbadChannel=<yes/no> -DquorumSize=<Q> -DnumberReplicas=<R>`` 
 where `<C>` is the number associated with the `clientKeys<C>.jks` file, 
