@@ -45,7 +45,7 @@
                 <configuration>
                     <mainClass>server.Server</mainClass>
                     <arguments>
-                        <argument>serverKeys.jks</argument>
+                        <argument>serverKeys</argument>
                         <argument>fixolas</argument>
                         <argument>${replicaNumber}</argument>
                         <argument>${reset}</argument>

@@ -35,11 +35,12 @@ public class Server {
         }
     }
 
-    private static KeyPair getKeyPair(String arg0, String arg1) throws RuntimeException {
+    private static KeyPair getKeyPair(String arg0, String arg1, String arg2) throws RuntimeException {
         try {
             KeyStore ks = KeyStore.getInstance("JKS");
             ClassLoader classloader = Thread.currentThread().getContextClassLoader();
-            InputStream is = classloader.getResourceAsStream(arg0);
+            System.out.println(arg0 + arg2 + ".jks" );
+            InputStream is = classloader.getResourceAsStream(arg0 + arg2 + ".jks" );
             ks.load(is, arg1.toCharArray());
             PrivateKey serverPrivateKey = (PrivateKey) ks.getKey("mykey", arg1.toCharArray());
             PublicKey serverPublicKey = ks.getCertificate("mykey").getPublicKey();
@@ -53,7 +54,7 @@ public class Server {
         System.out.println("Starting Server");
         var executorService = Executors.newCachedThreadPool();
 
-        var keyPair = getKeyPair(args[0], args[1]);
+        var keyPair = getKeyPair(args[0], args[1], args[2]);
         System.out.println(KeyConversion.keyToString(keyPair.getPublic()));
 
         int replicaNumber = 1;
