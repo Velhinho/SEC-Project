@@ -62,9 +62,8 @@
                         <argument>clientKeys</argument>
                         <argument>fixolas</argument>
                         <argument>${clientNumber}</argument>
-                        <argument>${badChannel}</argument>
-                        <argument>${quorumSize}</argument>
-                        <argument>${numberOfReplicas}</argument>
+                        <argument>${f}</argument>
+
                     </arguments>
                 </configuration>
             </plugin>

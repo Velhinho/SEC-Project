@@ -12,4 +12,12 @@ public class TimeStampResponse {
     public long getTs() {
         return ts;
     }
+
+    @Override
+    public String toString() {
+        return "TimeStampResponse{" +
+               "ts=" + ts +
+               ", type='" + type + '\'' +
+               '}';
+    }
 }

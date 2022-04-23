@@ -24,4 +24,13 @@ public class CheckResponse {
     public int getBalance() {
         return balance;
     }
+
+    @Override
+    public String toString() {
+        return "{" +
+               "balance=" + balance +
+               ", transfers=" + transfers +
+               ", type='" + type + '\'' +
+               '}';
+    }
 }

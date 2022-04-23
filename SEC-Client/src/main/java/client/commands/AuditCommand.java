@@ -1,13 +1,11 @@
 package client.commands;
 
-import client.ClientSide;
 import client.Register;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import communication.crypto.KeyConversion;
 import communication.messages.AuditRequest;
-import communication.messages.CheckAccountRequest;
 
 import java.util.Objects;
 
@@ -19,14 +17,14 @@ public final class AuditCommand implements Command {
     }
 
     @Override
-    public void execCommand(Register register) throws Exception {
+    public String execCommand(Register register) throws Exception {
         var key = KeyConversion.stringToKey(keyString);
-        AuditRequest auditRequest = new AuditRequest(key, key);
+        AuditRequest auditRequest = new AuditRequest(KeyConversion.stringToKey(register.getPublicKey()), key);
         var gson = new Gson();
         JsonObject requestJson = new JsonObject();
         requestJson.addProperty("requestType", "audit");
         requestJson.add("request", JsonParser.parseString(gson.toJson(auditRequest)));
-        register.read(requestJson);
+        return register.read(requestJson);
     }
 
     public String keyString() {

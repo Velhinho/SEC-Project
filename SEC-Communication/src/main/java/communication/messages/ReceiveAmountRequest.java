@@ -24,4 +24,13 @@ public class ReceiveAmountRequest {
     }
 
     public String getKey() { return key; }
+
+    @Override
+    public String toString() {
+        return "ReceiveAmountRequest{" +
+               "key='" + key + '\'' +
+               ", sender='" + sender + '\'' +
+               ", receiver='" + receiver + '\'' +
+               '}';
+    }
 }

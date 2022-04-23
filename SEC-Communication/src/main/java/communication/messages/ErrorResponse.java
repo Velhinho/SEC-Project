@@ -16,4 +16,12 @@ public class ErrorResponse {
     public String getType() {
         return type;
     }
+
+    @Override
+    public String toString() {
+        return "ErrorResponse{" +
+               "type='" + type + '\'' +
+               ", errorMessage='" + errorMessage + '\'' +
+               '}';
+    }
 }

@@ -1,16 +1,12 @@
 package client;
 
 import client.commands.Command;
-import client.commands.OpenCommand;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import communication.channel.BadChannel;
 import communication.channel.BroadcastChannel;
-import communication.channel.Channel;
 import communication.channel.ClientChannel;
 import communication.crypto.KeyConversion;
-import communication.messages.AuditRequest;
 import communication.messages.TimeStampRequest;
 
 import java.io.InputStream;
@@ -19,10 +15,18 @@ import java.net.Socket;
 import java.security.*;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class Client {
+
+    /**
+     * Gets a KeyPair from a .jks file
+     * @param arg0 The name of the .jks file
+     * @param arg1 The password of the .jks file
+     * @param arg2 The number of the .jks file
+     * @return a KeyPair obtained from the .jks file
+     * @throws RuntimeException
+     */
     private static KeyPair getKeyPair(String arg0, String arg1, String arg2) throws RuntimeException {
         try {
             KeyStore ks = KeyStore.getInstance("JKS");
@@ -39,6 +43,15 @@ public class Client {
         }
     }
 
+    /**
+     * The main function where the client runs
+     * @param args This function receives the following args:
+     *             args[0] = name of the .jks file where the KeyPair is stored.
+     *             args[1] = password of the .jks file where the KeyPair is stored.
+     *             args[2] = number of the .jks file where the KeyPair is stored.
+     *             args[3] = number of faults tolerated
+     */
+
     public static void main(String[] args) {
         System.out.println("Starting Client");
         System.out.println("Args:" + Arrays.toString(args));
@@ -47,15 +60,14 @@ public class Client {
         try {
             var keyPair = getKeyPair(args[0], args[1], args[2]);
             System.out.println("My Key: " + KeyConversion.keyToString(keyPair.getPublic()));
-            var quorumSize = 0;
-            if(args[4] != null){
-                quorumSize = Integer.parseInt(args[4]);
-            }
-            var numberOfReplicas = 1;
-            if(args[5] != null){
-                numberOfReplicas = Integer.parseInt(args[5]);
-            }
+            var quorumSize = 3;
+            var numberOfReplicas = 4;
+            if(args[3] != null){
+                int f = Integer.parseInt(args[3]);
+                quorumSize = 2 * f + 1;
+                numberOfReplicas = 3 * f + 1;
 
+            }
             ArrayList<ClientChannel> clientChannels = new ArrayList<>();
 
             for(int i = 1; i <= numberOfReplicas; i++){
@@ -72,7 +84,7 @@ public class Client {
             }
 
             BroadcastChannel broadcastChannel = new BroadcastChannel(clientChannels);
-            Register register = new Register(broadcastChannel, quorumSize);
+            Register register = new Register(broadcastChannel, quorumSize, KeyConversion.keyToString(keyPair.getPublic()));
 
             TimeStampRequest timeStampRequest = new TimeStampRequest(KeyConversion.keyToString(keyPair.getPublic()));
             var gson = new Gson();
@@ -81,7 +93,6 @@ public class Client {
             requestJson.add("request", JsonParser.parseString(gson.toJson(timeStampRequest)));
             JsonObject response = register.readTS(requestJson).get("response").getAsJsonObject();
             register.setTimestamp(new AtomicLong(response.get("ts").getAsLong()));
-            System.out.println("response : " + response);
 
             broadcastChannel.closeSocket();
 
@@ -111,7 +122,7 @@ public class Client {
                 register.setBroadcastChannel(broadcastChannel);
                 register.setQuorumSize(quorumSize);
 
-                command.execCommand(register);
+                System.out.println(command.execCommand(register));
 
                 broadcastChannel.closeSocket();
             }

@@ -8,15 +8,9 @@ public final class AcceptedTransfer extends Transfer {
 
     private final String receiverSignature;
 
-    public AcceptedTransfer(String sender, String receiver, int amount, String timestamp, String senderSignature, String receiverSignature, long wts, long rid) {
-        super(sender,receiver,amount,timestamp,senderSignature, wts, rid);
+    public AcceptedTransfer(String sender, String receiver, int amount, String senderSignature, String receiverSignature, long wts, long rid) {
+        super(sender,receiver,amount, senderSignature, wts, rid);
         this.receiverSignature = receiverSignature;
-    }
-
-    public static String DateToString(Date date){
-        //SimpleDateFormat formatter= new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
-        SimpleDateFormat formatter= new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss.SSS z");
-        return formatter.format(date);
     }
 
 
@@ -30,8 +24,9 @@ public final class AcceptedTransfer extends Transfer {
 
     @Override
     public String toString() {
-        return "AcceptedTransfer{" +
-               "receiverSignature='" + receiverSignature + '\'' +
+        return "AcceptedTransfers{" +
+               "sender='" + sender() + '\'' +
+               ", receiver='" + receiver() +
                '}';
     }
 

@@ -18,4 +18,12 @@ public class AuditResponse {
     public ArrayList<AcceptedTransfer> getTransfers() {
         return transfers;
     }
+
+    @Override
+    public String toString() {
+        return "AuditResponse{" +
+               "transfers=" + transfers +
+               ", type='" + type + '\'' +
+               '}';
+    }
 }

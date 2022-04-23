@@ -10,4 +10,11 @@ public class TimeStampRequest {
     public String getKey() {
         return key;
     }
+
+    @Override
+    public String toString() {
+        return "TimeStampRequest{" +
+               "key='" + key + '\'' +
+               '}';
+    }
 }

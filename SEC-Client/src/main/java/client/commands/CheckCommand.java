@@ -1,6 +1,5 @@
 package client.commands;
 
-import client.ClientSide;
 import client.Register;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -18,14 +17,14 @@ public final class CheckCommand implements Command {
     }
 
     @Override
-    public void execCommand(Register register) throws Exception {
+    public String execCommand(Register register) throws Exception {
         var key = KeyConversion.stringToKey(keyString);
-        CheckAccountRequest checkAccountRequest = new CheckAccountRequest(key, key);
+        CheckAccountRequest checkAccountRequest = new CheckAccountRequest(KeyConversion.stringToKey(register.getPublicKey()), key);
         var gson = new Gson();
         JsonObject requestJson = new JsonObject();
         requestJson.addProperty("requestType", "checkAccount");
         requestJson.add("request", JsonParser.parseString(gson.toJson(checkAccountRequest)));
-        register.read(requestJson);
+        return register.read(requestJson);
     }
 
     public String keyString() {

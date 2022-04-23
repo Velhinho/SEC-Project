@@ -8,6 +8,11 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 
 public class CommandParser {
+    /**
+     * Verifies if the given line contains an open command
+     * @param line A line of text
+     * @return an Optional that might contain or not an OpenCommand
+     */
     private static Optional<Command> open(String line) {
         var regex = "open (.+)";
         var p = Pattern.compile(regex);
@@ -19,6 +24,13 @@ public class CommandParser {
         }
     }
 
+
+    /**
+     * Verifies if the given line contains an check command
+     * @param line A line of text
+     * @return an Optional that might contain or not an CheckCommand
+     */
+
     private static Optional<Command> check(String line) {
         var regex = "check (.+)";
         var p = Pattern.compile(regex);
@@ -29,6 +41,12 @@ public class CommandParser {
             return Optional.empty();
         }
     }
+
+    /**
+     * Verifies if the given line contains an send command
+     * @param line A line of text
+     * @return an Optional that might contain or not an SendCommand
+     */
 
     private static Optional<Command> send(String line) {
         var regex = "send (.+) (.+) ([0-9]+)";
@@ -42,6 +60,12 @@ public class CommandParser {
         }
     }
 
+    /**
+     * Verifies if the given line contains an receive command
+     * @param line A line of text
+     * @return an Optional that might contain or not an ReceiveCommand
+     */
+
     private static Optional<Command> receive(String line) {
         var regex = "receive (.+) (.+)";
         var p = Pattern.compile(regex);
@@ -53,6 +77,12 @@ public class CommandParser {
         }
     }
 
+    /**
+     * Verifies if the given line contains an receive command
+     * @param line A line of text
+     * @return an Optional that might contain or not an ReceiveCommand
+     */
+
     private static Optional<Command> audit(String line) {
         var regex = "audit (.+)";
         var p = Pattern.compile(regex);
@@ -63,6 +93,13 @@ public class CommandParser {
             return Optional.empty();
         }
     }
+
+
+    /**
+     * Parse a command from a line
+     * @return A command parsed from the line
+     * @throws Exception If no command can be obtained.
+     */
 
     public static Command parseCommand() throws Exception {
         var commands = "open <KEY> \ncheck <KEY> \nsend <SENDER KEY> <RECEIVER KEY> <AMOUNT> \nreceive <SENDER KEY> <RECEIVER KEY> \naudit <KEY>";
