@@ -16,6 +16,8 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 
+
+
 public class Register {
     private AtomicLong timestamp = new AtomicLong(0);
     private BroadcastChannel broadcastChannel;
@@ -25,9 +27,10 @@ public class Register {
     private final String publicKey;
 
     /**
-     *
-     * @param broadcastChannel
-     * @param quorumSize
+     * Constructor for the register
+     * @param broadcastChannel a broadcast channel
+     * @param quorumSize a quorumSize
+     * @param publicKey a publicKey
      */
 
     public Register(BroadcastChannel broadcastChannel, int quorumSize, String publicKey) {
@@ -37,32 +40,57 @@ public class Register {
         this.publicKey = publicKey;
     }
 
+    /**
+     * Setter for the broadcast channel
+     * @param broadcastChannel the broadcast channel we want.
+     */
+
     public void setBroadcastChannel(BroadcastChannel broadcastChannel) {
         this.broadcastChannel = broadcastChannel;
     }
+
+    /**
+     * A setter for the quorum size
+     * @param quorumSize the quorum size we want
+     */
 
     public void setQuorumSize(int quorumSize) {
         this.quorumSize = quorumSize;
     }
 
+    /**
+     * A getter for the timestamp
+     * @return the timestamp
+     */
+
     public AtomicLong getTimestamp() {
         return timestamp;
     }
 
+    /**
+     * A getter for the broadcast channel
+     * @return the broadcast channel
+     */
+
     public BroadcastChannel getBroadcastChannel() {
         return broadcastChannel;
     }
+
+    /**
+     * A getter for the quorum size
+     * @return the quorum size
+     */
 
     public int getQuorumSize() {
         return quorumSize;
     }
 
     /**
-     *
-     * @param jsonObject
-     * @param timestamp
-     * @param readId
-     * @return
+     * Adds the properties of wts and readId to a JsonObject
+     * @param jsonObject the JsonObject
+     * @param timestamp the wt
+     * @param readId the readId
+     * @return A JsonObject with the properties of wts and readId added
      */
 
     private static JsonObject makeWriteMsg(JsonObject jsonObject, long timestamp, long readId) {
@@ -77,9 +105,9 @@ public class Register {
     }
 
     /**
-     *
-     * @param jsonObject
-     * @return
+     * Broadcast a write operation and receives acks.
+     * @param jsonObject A JsonObject containing a write operation(send or receive).
+     * @return The response of the server
      */
 
     public String write(JsonObject jsonObject) {
@@ -101,11 +129,11 @@ public class Register {
         return acks.get(0).get("response").getAsString();
     }
 
-
     /**
-    Generates a ReadId using SHA1PRNG and returns it
-     @return the readId
+     * Generates a ReadId using SHA1PRNG and returns it
+     * @return the readId
      */
+
     private static long generateReadId() {
         try {
             return SecureRandom.getInstance("SHA1PRNG").nextLong();
@@ -115,10 +143,10 @@ public class Register {
     }
 
     /**
-     *
-     * @param jsonObject
-     * @param readId
-     * @return
+     * Returns a jsonObject with the added property of the readId
+     * @param jsonObject the original JsonObject
+     * @param readId the readId that will be added
+     * @return a JsonObject with the readId added.
      */
 
     private static JsonObject makeReadMsg(JsonObject jsonObject, long readId) {
@@ -129,8 +157,7 @@ public class Register {
         return jsonWithReadId;
     }
 
-    /**
-    * Verifies Signatures of an arraylist of JsonObjects
+    /** Verifies Signatures of an arraylist of JsonObjects
      * @param jsonObjects a list of JsonObjects
      * @return true if signatures are valid, false otherwise
      */
@@ -153,8 +180,7 @@ public class Register {
         return true;
     }
 
-    /**
-     * Verifies of a response of an audit response is coherent with it's signature
+    /** Verifies of a response of an audit response is coherent with it's signature
      * @param jsonObject a jsonObject that is verified
      * @return true if the signature is valid, false otherwise
      */
@@ -184,8 +210,7 @@ public class Register {
         return true;
     }
 
-    /**
-     * Verifies of a response of an check response is coherent with it's signature
+    /** Verifies of a response of an check response is coherent with it's signature
      * @param jsonObject a jsonObject that is verified
      * @return true if the signature is valid, false otherwise
      */
@@ -259,10 +284,10 @@ public class Register {
     }
 
     /**
-     *
-     * @param jsonObjects
-     * @param readId
-     * @return
+     * Verifies if the readIds match the one sent
+     * @param jsonObjects An Array of JsonObject containing messages that need to be verified
+     * @param readId The readId sent
+     * @return True if the number of matching readId is equal or larger to the quorum size. Otherwise returns false.
      */
 
     private boolean checkReadIds(ArrayList<JsonObject> jsonObjects, long readId) {
@@ -276,42 +301,13 @@ public class Register {
     }
 
     /**
-     *
-     * @param object
-     * @return
+     * Broadcast a JsonObject containing a read operation
+     * Since it is an expensive operation, a proof of work is required to be complete before starting the operation
+     * to avoid DDOS. Since we are using a Write-Majority algorithm, after the read, we broadcast the value with the
+     * highest timestamp to all replicas, which is what makes the operation expensive.
+     * @param object A JsonObject that contains a read operation that will be broadcast to all replicas
+     * @return A value received as a response to the broadcast read operation
      */
-
-    public String readOld(JsonObject object) {
-        proofOfWork(object, difficulty);
-        var readId = generateReadId();
-        var readMsg = makeReadMsg(object, readId);
-        reading = true;
-        broadcastChannel.broadcastMsg(readMsg);
-        var msgs = broadcastChannel.receiveMsgs();
-        System.out.println(msgs);
-        JsonObject highestValue;
-        if (checkReadIds(msgs, readId) && verifySignatures(msgs) && hasQuorumSize(msgs.size())) {
-            highestValue = highestValue(msgs);
-            ArrayList<JsonObject> necessaryMessages = getNecessaryMessages(highestValue);
-            System.out.println("Has validated signatures!");
-            for(JsonObject necessaryMessage : necessaryMessages){
-                System.out.println("Sending Necessary Messages : " + necessaryMessage);
-                readId = necessaryMessage.get("readId").getAsLong();
-                broadcastChannel.broadcastDirectMsg(necessaryMessage);
-                var acks = broadcastChannel.receiveMsgs();
-                if (acks.size() < getQuorumSize()) {
-                    throw new RuntimeException("Not enough ACKs");
-                }
-                if (!checkReadIds(acks, readId)) {
-                    throw new RuntimeException("Wrong ReadIds received");
-                }
-            }
-            reading = false;
-            return highestValue.get("response").getAsString();
-        } else {
-            throw new RuntimeException("Too many crashes");
-        }
-    }
 
     public String read(JsonObject object) {
         proofOfWork(object, difficulty);
@@ -359,40 +355,11 @@ public class Register {
     }
 
     /**
-     *
-     * @param jsonObject
-     * @return
+     * Creates a JsonObject containing WriteBackCheckRequest from a JsonObject containing an CheckResponse
+     * which contains the transfer that will be needed to be written to update replicas.
+     * @param jsonObject A JsonObject containing an CheckResponse
+     * @return A JsonObject containing a WriteBackCheckRequest.
      */
-
-    public ArrayList<JsonObject> getNecessaryMessages(JsonObject jsonObject){
-        ArrayList<JsonObject> necessaryMessages = new ArrayList<>();
-        JsonObject response = jsonObject.get("response").getAsJsonObject();
-        String type = response.get("type").getAsString();
-        Gson gson = new Gson();
-        if (type.equals("Check")) {
-            CheckResponse checkResponse = gson.fromJson(jsonObject.get("response").getAsJsonObject(), CheckResponse.class);
-            ArrayList<PendingTransfer> pendingTransfers = checkResponse.getTransfers();
-            for(PendingTransfer pendingTransfer : pendingTransfers) {
-                PublicKey sender = KeyConversion.stringToKey(pendingTransfer.sender());
-                PublicKey receiver = KeyConversion.stringToKey(pendingTransfer.receiver());
-                JsonObject sendAmountRequest = getSendAmountRequestMessage(pendingTransfer, sender, receiver, pendingTransfer.amount());
-                sendAmountRequest.addProperty("signature", pendingTransfer.getSignature());
-                necessaryMessages.add(sendAmountRequest);
-            }
-        }
-        else if (type.equals("Audit")){
-            AuditResponse auditResponse = gson.fromJson(jsonObject.get("response").getAsJsonObject(), AuditResponse.class);
-            ArrayList<AcceptedTransfer> acceptedTransfers = auditResponse.getTransfers();
-            for(AcceptedTransfer acceptedTransfer : acceptedTransfers) {
-                PublicKey sender = KeyConversion.stringToKey(acceptedTransfer.sender());
-                PublicKey receiver = KeyConversion.stringToKey(acceptedTransfer.receiver());
-                JsonObject receiverAmountRequest = getReceiveAmountRequestMessage(acceptedTransfer, sender, receiver);
-                receiverAmountRequest.addProperty("signature", acceptedTransfer.getReceiverSignature());
-                necessaryMessages.add(receiverAmountRequest);
-            }
-        }
-        return necessaryMessages;
-    }
 
     public JsonObject writeBackCheck(JsonObject jsonObject){
         ArrayList<JsonObject> necessaryMessages = new ArrayList<>();
@@ -418,13 +385,20 @@ public class Register {
         return requestJson;
     }
 
+    /**
+     * Creates a JsonObject containing WriteBackAuditRequest from a JsonObject containing an AuditResponse
+     * which contains the transfer that will be needed to be written to update replicas.
+     * @param jsonObject A JsonObject containing an AuditResponse
+     * @return A JsonObject containing a WriteBackAuditRequest.
+     */
+
     public JsonObject writeBackAudit(JsonObject jsonObject){
         ArrayList<JsonObject> necessaryMessages = new ArrayList<>();
         JsonObject response = jsonObject.get("response").getAsJsonObject();
         String type = response.get("type").getAsString();
         Gson gson = new Gson();
         WriteBackAuditRequest writeBackAuditRequest = new WriteBackAuditRequest(necessaryMessages, publicKey);
-        if (type.equals("Check")) {
+        if (type.equals("Audit")) {
             AuditResponse auditResponse = gson.fromJson(jsonObject.get("response").getAsJsonObject(), AuditResponse.class);
             ArrayList<AcceptedTransfer> acceptedTransfers = auditResponse.getTransfers();
             for (AcceptedTransfer acceptedTransfer : acceptedTransfers) {
@@ -443,9 +417,9 @@ public class Register {
     }
 
     /**
-     *
-     * @param object
-     * @return
+     * Broadcasts a request for the timestamp
+     * @param object A JsonObject that contains a request for a timestamp
+     * @return A JsonObject containing the new timestamp
      */
 
     public JsonObject readTS(JsonObject object) {
@@ -463,17 +437,23 @@ public class Register {
         }
     }
 
+    /**
+     * Sets the timestamp of the replica
+     * @param timestamp The value we want the timestamp to take.
+     */
+
     public void setTimestamp(AtomicLong timestamp) {
         this.timestamp = timestamp;
     }
 
     /**
-     *
-     * @param pendingTransfer
-     * @param sender
-     * @param receiver
-     * @param amount
-     * @return
+     * Constructs a JsonObject of SendAmountRequest from an PendingTransfer,
+     * the public Key of its sender, the public Key of its receiver and the amount.
+     * @param pendingTransfer The pending transfer
+     * @param sender The publicKey of the sender
+     * @param receiver The publicKey of the receiver
+     * @param amount The amount of the transfer
+     * @return A JsonObject containing a SendAmountRequest, a wts and a rid.
      */
 
     public JsonObject getSendAmountRequestMessage(PendingTransfer pendingTransfer, PublicKey sender, PublicKey receiver, int amount){
@@ -486,11 +466,12 @@ public class Register {
     }
 
     /**
-     *
-     * @param acceptedTransfer
-     * @param sender
-     * @param receiver
-     * @return
+     *  Constructs a JsonObject of ReceiveAmountRequest from an AcceptedTransfer,
+     * the public Key of its sender and the public Key of its receiver.
+     * @param acceptedTransfer The accepted transfer
+     * @param sender The publicKey of the sender
+     * @param receiver The publicKey of the receiver
+     * @return A JsonObject containing a ReceiveAmountRequest, a wts and a rid.
      */
 
     public JsonObject getReceiveAmountRequestMessage(AcceptedTransfer acceptedTransfer, PublicKey sender, PublicKey receiver){
@@ -552,6 +533,11 @@ public class Register {
         }
         return true;
     }
+
+    /**
+     * Getter for the public key
+     * @return The public key
+     */
 
     public String getPublicKey() {
         return publicKey;
