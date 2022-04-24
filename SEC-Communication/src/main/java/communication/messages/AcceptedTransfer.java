@@ -8,11 +8,10 @@ public final class AcceptedTransfer extends Transfer {
 
     private final String receiverSignature;
 
-    public AcceptedTransfer(String sender, String receiver, int amount, String senderSignature, String receiverSignature, long wts, long rid) {
-        super(sender,receiver,amount, senderSignature, wts, rid);
+    public AcceptedTransfer(String sender, String receiver, int amount, String receiverSignature, long wts, long rid) {
+        super(sender,receiver,amount, wts, rid);
         this.receiverSignature = receiverSignature;
     }
-
 
     @Override
     public boolean equals(Object o) {

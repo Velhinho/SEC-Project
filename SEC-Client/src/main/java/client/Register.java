@@ -112,17 +112,14 @@ public class Register {
 
     public String write(JsonObject jsonObject) {
         var timestamp = getTimestamp().incrementAndGet();
-        System.out.println(timestamp);
         long readId = generateReadId();
         var writeMsg = makeWriteMsg(jsonObject, timestamp, readId);
-        System.out.println(writeMsg);
         getBroadcastChannel().broadcastMsg(writeMsg);
 
         var acks = getBroadcastChannel().receiveMsgs();
         if (acks.size() < getQuorumSize()) {
             throw new RuntimeException("Not enough ACKs");
         }
-        System.out.println(acks);
         if(!checkReadIds(acks, readId)){
             throw new RuntimeException("Wrong ReadIds received");
         }
@@ -164,7 +161,6 @@ public class Register {
 
     private boolean verifySignatures(ArrayList<JsonObject> jsonObjects) {
         for (JsonObject jsonObject : jsonObjects) {
-            System.out.println(jsonObject);
             JsonObject response = jsonObject.get("response").getAsJsonObject();
             String type = response.get("type").getAsString();
             if (type.equals("Check")) {
@@ -217,7 +213,6 @@ public class Register {
 
     private boolean verifyCheckResponse(JsonObject jsonObject) {
         Gson gson = new Gson();
-        System.out.println(jsonObject);
         CheckResponse checkResponse = gson.fromJson(jsonObject.get("response").getAsJsonObject(), CheckResponse.class);
         ArrayList<PendingTransfer> pendingTransfers = checkResponse.getTransfers();
         for (PendingTransfer pendingTransfer : pendingTransfers) {
@@ -227,11 +222,9 @@ public class Register {
             JsonObject requestJson = new JsonObject();
             requestJson.addProperty("requestType", "sendAmount");
             requestJson.add("request", JsonParser.parseString(gson.toJson(sendAmountRequest)));
-            System.out.println(requestJson);
             JsonObject requestJsonWts = makeWriteMsg(requestJson, pendingTransfer.getWts(), pendingTransfer.getRid());
-            System.out.println("requestJsonWts : "  + requestJsonWts);
             try {
-                if (!StringSignature.verify(requestJsonWts.toString(), pendingTransfer.getSignature(), sender)) {
+                if (!StringSignature.verify(requestJsonWts.toString(), pendingTransfer.getSenderSignature(), sender)) {
                     System.out.println("Check : Error on the Signatures");
                     return false;
                 }
@@ -316,11 +309,9 @@ public class Register {
         reading = true;
         broadcastChannel.broadcastMsg(readMsg);
         var msgs = broadcastChannel.receiveMsgs();
-        System.out.println(msgs);
         JsonObject highestValue;
         if (checkReadIds(msgs, readId) && verifySignatures(msgs) && hasQuorumSize(msgs.size())) {
             highestValue = highestValue(msgs);
-            System.out.println("Has validated signatures!");
             JsonObject writebackMessage = null;
             if(object.get("requestType").getAsString().equals("audit")){
                 writebackMessage = writeBackAudit(highestValue);
@@ -332,9 +323,7 @@ public class Register {
                 write(writebackMessage);
             }
             reading = false;
-            System.out.println("highestValue: " + highestValue);
             JsonObject highestValueResponse = highestValue.get("response").getAsJsonObject();
-            System.out.println("highestValueResponse: " + highestValueResponse);
             if(highestValueResponse.get("type").getAsString().equals("Error")){
                 return highestValueResponse.get("errorMessage").getAsString();
             }
@@ -374,7 +363,7 @@ public class Register {
                 PublicKey sender = KeyConversion.stringToKey(pendingTransfer.sender());
                 PublicKey receiver = KeyConversion.stringToKey(pendingTransfer.receiver());
                 JsonObject sendAmountRequest = getSendAmountRequestMessage(pendingTransfer, sender, receiver, pendingTransfer.amount());
-                sendAmountRequest.addProperty("signature", pendingTransfer.getSignature());
+                sendAmountRequest.addProperty("signature", pendingTransfer.getSenderSignature());
                 necessaryMessages.add(sendAmountRequest);
             }
             writeBackCheckRequest = new WriteBackCheckRequest(necessaryMessages, publicKey);
@@ -429,7 +418,6 @@ public class Register {
         broadcastChannel.broadcastMsg(readMsg);
 
         var msgs = broadcastChannel.receiveMsgs();
-        System.out.println(msgs);
         if (checkReadIds(msgs, readId) && verifySignatures(msgs) && hasQuorumSize(msgs.size())) {
             return highestValue(msgs);
         } else {

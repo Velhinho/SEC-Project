@@ -35,17 +35,7 @@ public class ServerSide {
         this.serverData = serverData;
     }
 
-    private JsonObject makeResponse(Object response) {
-        var gson = new Gson();
-        var responseJson = new JsonObject();
-        responseJson.add("response", JsonParser.parseString(gson.toJson(response)));
-        var key = KeyConversion.keyToString(keyPair.getPublic());
-        responseJson.addProperty("key", key);
-        return responseJson;
-    }
-
     private JsonObject makeReadResponse(String response, long rid, long ts){
-        var gson = new Gson();
         var responseJson = new JsonObject();
         responseJson.add("response", JsonParser.parseString(response));
         var key = KeyConversion.keyToString(keyPair.getPublic());
@@ -84,11 +74,8 @@ public class ServerSide {
     public void processRequest() throws RuntimeException, ChannelException {
         var message = getChannel().receiveMessage();
         var signature = message.get("signature").getAsString();
-        System.out.println("signature: " + signature);
         var requestJson = message.get("jsonObject").getAsJsonObject();
-        System.out.println("jsonObject: " + requestJson);
         var requestType = requestJson.get("requestType").getAsString();
-        System.out.println("requestType: " + requestType);
 
         var gson = new Gson();
 

@@ -4,18 +4,16 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public abstract class Transfer implements Comparable<Transfer> {
-    private final String signature;
     private final String  sender;
     private final String receiver;
     private final int amount;
     private final long wts;
     private final long rid;
 
-    public Transfer(String sender, String receiver, int amount, String signature, long wts, long rid){
+    public Transfer(String sender, String receiver, int amount, long wts, long rid){
         this.sender = sender;
         this.receiver = receiver;
         this.amount = amount;
-        this.signature = signature;
         this.wts = wts;
         this.rid = rid;
     }
@@ -50,16 +48,11 @@ public abstract class Transfer implements Comparable<Transfer> {
         return amount;
     }
 
-    public String getSignature() {
-        return signature;
-    }
-
 
     @Override
     public String toString() {
         return "Transfer{" +
-               "signature='" + signature + '\'' +
-               ", sender='" + sender + '\'' +
+               "sender='" + sender + '\'' +
                ", receiver='" + receiver + '\'' +
                ", amount=" + amount +
                '}';

@@ -6,6 +6,11 @@ import communication.messages.PendingTransfer;
 import java.util.ArrayList;
 import java.util.Objects;
 
+/**
+ * An Account
+ * Accounts contain their public key, their balance, their accepted transfer, their pending transfers and its wts
+ */
+
 public final class Account {
     private final String key;
     private int balance;
@@ -73,9 +78,5 @@ public final class Account {
 
     public long getTs() {
         return ts;
-    }
-
-    public int getBalance() {
-        return balance;
     }
 }

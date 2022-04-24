@@ -27,10 +27,6 @@ public class ReceiveAmountRequest {
 
     @Override
     public String toString() {
-        return "ReceiveAmountRequest{" +
-               "key='" + key + '\'' +
-               ", sender='" + sender + '\'' +
-               ", receiver='" + receiver + '\'' +
-               '}';
+        return "Account " + key + "wants to receive a transfer from " + sender + " as " + receiver + ".";
     }
 }

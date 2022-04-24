@@ -37,8 +37,7 @@ public final class CheckAccountRequest {
 
     @Override
     public String toString() {
-        return "CheckAccountRequest[" +
-                "key=" + key + ']';
+        return "Account " + key + "wants to check account " + checkKey + ".";
     }
 
 

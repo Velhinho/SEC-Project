@@ -37,8 +37,7 @@ public final class AuditRequest {
 
     @Override
     public String toString() {
-        return "AuditRequest[" +
-                "key=" + key + ']';
+        return "Account " + key + "wants to audit account " + auditKey + ".";
     }
 
 }

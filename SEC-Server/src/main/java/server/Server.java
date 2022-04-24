@@ -17,6 +17,16 @@ import java.security.PublicKey;
 import java.util.concurrent.Executors;
 
 public class Server {
+
+    /**
+     * Creates a thread that serves the client while the socket is open.
+     * @param client The socket of the client
+     * @param keyPair The keys of the server
+     * @param serverData The database where the client's request will be executed
+     * @throws RuntimeException
+     */
+
+
     private static void serveClient(Socket client, KeyPair keyPair, ServerData serverData) throws RuntimeException {
         try (client) {
             var channel = new ServerChannel(client, keyPair.getPrivate());
@@ -35,6 +45,15 @@ public class Server {
         }
     }
 
+    /**
+     * Gets a KeyPair from a .jks file
+     * @param arg0 The name of the .jks file
+     * @param arg1 The password of the .jks file
+     * @param arg2 The number of the .jks file
+     * @return a KeyPair obtained from the .jks file
+     * @throws RuntimeException
+     */
+
     private static KeyPair getKeyPair(String arg0, String arg1, String arg2) throws RuntimeException {
         try {
             KeyStore ks = KeyStore.getInstance("JKS");
@@ -50,18 +69,27 @@ public class Server {
         }
     }
 
+    /**
+     * Starts a server, which will create threads to serve clients
+     * @param args The args are:
+     *            args[0] = name of the .jks file
+     *            args[1] = password of the .jks file
+     *            args[2] = number of the replica (If null, then we assume we are using replica 1)
+     *            args[3] = If the database needs to be reset or not (If null, then we assume we do not reset)
+     */
+
     public static void main(String[] args) {
         System.out.println("Starting Server");
         var executorService = Executors.newCachedThreadPool();
-
-        var keyPair = getKeyPair(args[0], args[1], args[2]);
-        System.out.println(KeyConversion.keyToString(keyPair.getPublic()));
 
         int replicaNumber = 1;
 
         if(args[2] != null){
             replicaNumber = Integer.parseInt(args[2]);
         }
+
+        var keyPair = getKeyPair(args[0], args[1], Integer.toString(replicaNumber));
+        System.out.println(KeyConversion.keyToString(keyPair.getPublic()));
 
         String reset = "no";
 

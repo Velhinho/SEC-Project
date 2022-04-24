@@ -215,8 +215,8 @@ public class ClientTest {
     void AuditClient1() throws Exception{
         String publicKey =  KeyConversion.keyToString(keyPair1.getPublic());
         String publicKey2 = KeyConversion.keyToString(keyPair2.getPublic());
-        AcceptedTransfer transfer = new AcceptedTransfer(publicKey, publicKey2, 5, null, null, 0,0);
-        AcceptedTransfer transfer2 = new AcceptedTransfer(publicKey2, publicKey, 5, null, null,0,0);
+        AcceptedTransfer transfer = new AcceptedTransfer(publicKey, publicKey2, 5, null,  0,0);
+        AcceptedTransfer transfer2 = new AcceptedTransfer(publicKey2, publicKey, 5, null, 0,0);
         ArrayList<AcceptedTransfer> transfers = new ArrayList<>();
         transfers.add(transfer);
         transfers.add(transfer2);
@@ -231,8 +231,8 @@ public class ClientTest {
     void AuditClient2() throws Exception{
         String publicKey =  KeyConversion.keyToString(keyPair1.getPublic());
         String publicKey2 = KeyConversion.keyToString(keyPair2.getPublic());
-        AcceptedTransfer transfer = new AcceptedTransfer(publicKey, publicKey2, 5, null, null, 0,0);
-        AcceptedTransfer transfer2 = new AcceptedTransfer(publicKey2, publicKey, 5, null, null,0,0);
+        AcceptedTransfer transfer = new AcceptedTransfer(publicKey, publicKey2, 5, null,  0,0);
+        AcceptedTransfer transfer2 = new AcceptedTransfer(publicKey2, publicKey, 5, null, 0,0);
         ArrayList<AcceptedTransfer> transfers = new ArrayList<>();
         transfers.add(transfer);
         transfers.add(transfer2);
@@ -247,8 +247,8 @@ public class ClientTest {
     void Client2AuditsClient1() throws Exception{
         String publicKey =  KeyConversion.keyToString(keyPair1.getPublic());
         String publicKey2 = KeyConversion.keyToString(keyPair2.getPublic());
-        AcceptedTransfer transfer = new AcceptedTransfer(publicKey, publicKey2, 5, null, null, 0,0);
-        AcceptedTransfer transfer2 = new AcceptedTransfer(publicKey2, publicKey, 5, null, null,0,0);
+        AcceptedTransfer transfer = new AcceptedTransfer(publicKey, publicKey2, 5, null,  0,0);
+        AcceptedTransfer transfer2 = new AcceptedTransfer(publicKey2, publicKey, 5, null, 0,0);
         ArrayList<AcceptedTransfer> transfers = new ArrayList<>();
         transfers.add(transfer);
         transfers.add(transfer2);
@@ -263,8 +263,8 @@ public class ClientTest {
     void Client1AuditsClient2() throws Exception{
         String publicKey =  KeyConversion.keyToString(keyPair1.getPublic());
         String publicKey2 = KeyConversion.keyToString(keyPair2.getPublic());
-        AcceptedTransfer transfer = new AcceptedTransfer(publicKey, publicKey2, 5, null, null, 0,0);
-        AcceptedTransfer transfer2 = new AcceptedTransfer(publicKey2, publicKey, 5, null, null,0,0);
+        AcceptedTransfer transfer = new AcceptedTransfer(publicKey, publicKey2, 5, null, 0,0);
+        AcceptedTransfer transfer2 = new AcceptedTransfer(publicKey2, publicKey, 5, null,0,0);
         ArrayList<AcceptedTransfer> transfers = new ArrayList<>();
         transfers.add(transfer);
         transfers.add(transfer2);

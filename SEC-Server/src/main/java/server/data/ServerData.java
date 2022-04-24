@@ -4,9 +4,7 @@ import communication.messages.AcceptedTransfer;
 import communication.messages.PendingTransfer;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -95,7 +93,6 @@ public class ServerData {
                             "source_key           TEXT    NOT NULL,\n" +
                             "receiver_key           TEXT    NOT NULL,\n" +
                             "amount            INT     NOT NULL,\n" +
-                            "sender_signature TEXT NOT NULL,\n" +
                             "receiver_signature TEXT NOT NULL,\n" +
                             "rid INTEGER  NOT NULL,\n" +
                             "wts INTEGER  NOT NULL);";
@@ -195,16 +192,27 @@ public class ServerData {
         }
     }
 
+    /**
+     * Send amount from the sender account to the receiver account. Before doing this verifies if both the accounts
+     * exist, if the wts is updated or missing and if there is enough balance on the sender's account for the
+     * transfer to be made.
+     * @param sender The key of the sender account
+     * @param receiver The key of the receiver
+     * @param amount The amount that is being sent
+     * @param wts The wts of the sender
+     * @param signature The signature of the request
+     * @param rid The rid of the send request
+     * @return A string containing a response
+     */
+
     public String sendAmount(String sender, String receiver, int amount, long wts, String signature, long rid){
         Account senderAccount = getAccount(sender);
         if (senderAccount == null){
             return "The sender account doesn't exist!";
         }
         long ts = senderAccount.getTs();
-        System.out.println("Transfers currently in database: " + getCurrentTransfersFromAccount(sender));
-        System.out.println("wts: " + wts);
+
         if(getCurrentTransfersFromAccount(sender).contains(wts)){
-            System.out.println("Transfer with wts=" + wts + " was rejected.");
             return "Unneeded Transfer";
         }
         if(wts <= ts && getCurrentTransfersFromAccount(sender).contains(wts)){
@@ -251,6 +259,7 @@ public class ServerData {
             c.commit();
         } catch (SQLException e){
             try{
+                System.out.println("Rollback was done");
                 c.rollback();
             }
             catch (SQLException e2){
@@ -308,11 +317,10 @@ public class ServerData {
                 String source_key = rs2.getString("source_key");
                 String receiver_key = rs2.getString("receiver_key");
                 int amount = rs2.getInt("amount");
-                String senderSignature = rs2.getString("sender_signature");
                 String receiverSignature = rs2.getString("receiver_signature");
                 long wts = rs2.getLong("wts");
                 long rid = rs2.getLong("rid");
-                acceptedTransfer = new AcceptedTransfer(source_key, receiver_key, amount, senderSignature, receiverSignature, wts, rid );
+                acceptedTransfer = new AcceptedTransfer(source_key, receiver_key, amount, receiverSignature, wts, rid );
                 account.addTransfer(acceptedTransfer);
             }
 
@@ -335,6 +343,7 @@ public class ServerData {
             c.commit();
         } catch (SQLException e){
             try{
+                System.out.println("Rollback was done");
                 c.rollback();
             }
             catch (SQLException e2){
@@ -391,7 +400,6 @@ public class ServerData {
                 .stream()
                 .filter(d -> d.sender().equals(sender) && d.receiver().equals(receiver))
                 .collect(Collectors.toList());
-        System.out.println(transfers);
         transfers.sort(Collections.reverseOrder());
         if (transfers.size() <= 0){
             return "No transfers to  receive!";
@@ -426,15 +434,14 @@ public class ServerData {
             pstmt2.executeUpdate();
             pstmt2.close();
 
-            sql_insert_transfers = "INSERT INTO transfers (source_key, receiver_key, amount, sender_signature, receiver_signature, wts, rid) VALUES (?,?,?,?,?,?,?);";
+            sql_insert_transfers = "INSERT INTO transfers (source_key, receiver_key, amount, receiver_signature, wts, rid) VALUES (?,?,?,?,?,?);";
             pstmt3 = c.prepareStatement(sql_insert_transfers);
             pstmt3.setString(1, sender);
             pstmt3.setString(2, receiver);
             pstmt3.setInt(3, pendingTransfer.amount());
-            pstmt3.setString(4, pendingTransfer.getSignature());
-            pstmt3.setString(5, signature);
-            pstmt3.setLong(6, wts);
-            pstmt3.setLong(7, rid);
+            pstmt3.setString(4, signature);
+            pstmt3.setLong(5, wts);
+            pstmt3.setLong(6, rid);
 
             pstmt3.executeUpdate();
             pstmt3.close();
@@ -483,8 +490,14 @@ public class ServerData {
         return "Transfer received with success!";
     }
 
-    public ArrayList<Long> getCurrentTransfersFromAccount(String accountKey){
-        ArrayList<Long> currentTransfers = new ArrayList<>();
+    /**
+     * Returns the wts's of the operations already in the account
+     * @param accountKey The account we want to search for wts
+     * @return a list of the wts.
+     */
+
+    public Set<Long> getCurrentTransfersFromAccount(String accountKey){
+        Set<Long> currentTransfers = new HashSet<>();
         PreparedStatement pstmt1 = null;
         PreparedStatement pstmt2 = null;
         ResultSet rs1 = null;
@@ -543,73 +556,8 @@ public class ServerData {
             }
 
         }
-        System.out.println("currentTransfers: " + currentTransfers);
         return currentTransfers;
 
     }
-
-    /*
-    public ArrayList<Long> getCurrentTransfers(){
-        ArrayList<Long> currentTransfers = new ArrayList<>();
-        PreparedStatement pstmt1 = null;
-        PreparedStatement pstmt2 = null;
-        ResultSet rs1 = null;
-        ResultSet rs2 = null;
-        String sql_pendingTransfers_wts;
-        String sql_transfers_wts;
-
-        try {
-
-            sql_pendingTransfers_wts = "SELECT wts FROM pending_transfers;";
-            pstmt1 = c.prepareStatement(sql_pendingTransfers_wts);
-            rs1 = pstmt1.executeQuery();
-            while (rs1.next()) {
-                Long wts = rs1.getLong("wts");
-                currentTransfers.add(wts);
-            }
-
-            sql_transfers_wts = "SELECT wts FROM transfers;";
-            pstmt2 = c.prepareStatement(sql_transfers_wts);
-            rs2 = pstmt2.executeQuery();
-            while (rs2.next()) {
-                Long wts = rs2.getLong("wts");
-                currentTransfers.add(wts);
-            }
-            c.commit();
-        }
-        catch (SQLException e1){
-            try {
-                System.out.println("Rollback was done");
-                c.rollback();
-            }
-            catch (SQLException e2){
-                System.err.println( e2.getClass().getName() + ": " + e2.getMessage() );
-                System.exit(0);
-            }
-        }
-        finally {
-            try {
-                if (pstmt1 != null) {
-                    pstmt1.close();
-                }
-                if (pstmt2 != null) {
-                    pstmt2.close();
-                }
-                if (rs1 != null) {
-                    rs1.close();
-                }
-                if (rs2 != null) {
-                    rs2.close();
-                }
-            }catch (SQLException e){
-                System.err.println( e.getClass().getName() + ": " + e.getMessage() );
-                System.exit(0);
-            }
-
-        }
-        return currentTransfers;
-
-
-    }*/
 
 }

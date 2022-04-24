@@ -33,10 +33,6 @@ public class SendAmountRequest {
 
     @Override
     public String toString() {
-        return "SendAmountRequest{" +
-                "sender='" + sender + '\'' +
-                ", receiver='" + receiver + '\'' +
-                ", amount=" + amount +
-                '}';
+        return "Account " + key + "wants to send a transfer from " + sender + " to " + receiver + ".";
     }
 }
