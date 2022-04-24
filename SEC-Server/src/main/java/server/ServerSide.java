@@ -62,12 +62,10 @@ public class ServerSide {
     }
 
     private static long getWts(JsonObject jsonObject){
-        System.out.println(jsonObject);
         return jsonObject.get("wts").getAsLong();
     }
 
     private static long getRid(JsonObject jsonObject){
-        System.out.println(jsonObject);
         return jsonObject.get("readId").getAsLong();
     }
 
@@ -248,36 +246,24 @@ public class ServerSide {
     }
 
     private String writeBackCheck(ArrayList<JsonObject> jsonObjects){
-        System.out.println(jsonObjects);
-        System.out.println(jsonObjects.size());
         //jsonWithTS = {"jsonObject": { "request": Request, "requestType": type}, "wts": 3, "readId":2}
         for(JsonObject currentJsonObject : jsonObjects){
 
             long wts = currentJsonObject.get("wts").getAsLong();
-            System.out.println("wts: " + wts);
             long readId = currentJsonObject.get("readId").getAsLong();
-            System.out.println("readId: " + readId);
             String signature = currentJsonObject.get("signature").getAsString();
-            System.out.println("signature: " + signature);
             JsonObject jsonObject = currentJsonObject.get("jsonObject").getAsJsonObject();
-            System.out.println("jsonObject: "  + jsonObject);
             JsonObject jsonNoSignature = currentJsonObject.deepCopy();
             jsonNoSignature.remove("signature");
-            System.out.println("jsonNoSignature: " + jsonNoSignature);
             JsonObject requestJson = jsonObject.get("request").getAsJsonObject();
-            System.out.println("requestJson: " + requestJson);
             String type = jsonObject.get("requestType").getAsString();
-            System.out.println("type: "+ type);
             if(type.equals("sendAmount")) {
                 Gson gson = new Gson();
                 SendAmountRequest sendAmountRequest = gson.fromJson(requestJson, SendAmountRequest.class);
-                System.out.println("sendAmountRequest: " + sendAmountRequest);
                 PublicKey publicKey = KeyConversion.stringToKey(sendAmountRequest.getSender());
                 try {
                     if (StringSignature.verify(jsonNoSignature.toString(), signature, publicKey)) {
-                        System.out.println("Starts Sending");
                         sendAmount(sendAmountRequest.getSender(), sendAmountRequest.getReceiver(), sendAmountRequest.getAmount(), sendAmountRequest.getKey(), wts, signature, readId);
-                        System.out.println("Stops Sending");
                     }
                     else {
                         System.out.println("Transfer is badly signed");
@@ -289,12 +275,10 @@ public class ServerSide {
                 }
             }
         }
-        System.out.println("Reached the End");
         return "All Transactions processed";
     }
 
     private String writeBackAudit(ArrayList<JsonObject> jsonObjects){
-        System.out.println(jsonObjects);
         Gson gson = new Gson();
         //jsonWithTS = {"jsonObject": { "request": Request, "requestType": type}, "wts": 3, "readId":2}
         for(JsonObject currentJsonObject : jsonObjects){
