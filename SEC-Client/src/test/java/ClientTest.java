@@ -139,8 +139,8 @@ public class ClientTest {
     void checkAccount1() throws Exception {
         String publicKey =  KeyConversion.keyToString(keyPair1.getPublic());
         String publicKey2 = KeyConversion.keyToString(keyPair2.getPublic());
-        PendingTransfer transfer = new PendingTransfer(publicKey, publicKey2, 5, null, 0, 0);
-        PendingTransfer transfer2 = new PendingTransfer(publicKey2, publicKey, 5, null, 0,0);
+        PendingTransfer transfer = new PendingTransfer(publicKey, publicKey2, 5, null, 0, 0, 0);
+        PendingTransfer transfer2 = new PendingTransfer(publicKey2, publicKey, 5, null, 0,0, 0);
         ArrayList<PendingTransfer> transfers = new ArrayList<>();
         transfers.add(transfer2);
         transfers.add(transfer);
@@ -154,8 +154,8 @@ public class ClientTest {
     void checkAccount2() throws Exception {
         String publicKey =  KeyConversion.keyToString(keyPair1.getPublic());
         String publicKey2 = KeyConversion.keyToString(keyPair2.getPublic());
-        PendingTransfer transfer = new PendingTransfer(publicKey, publicKey2, 5, null, 0, 0);
-        PendingTransfer transfer2 = new PendingTransfer(publicKey2, publicKey, 5, null, 0,0);
+        PendingTransfer transfer = new PendingTransfer(publicKey, publicKey2, 5, null, 0, 0, 0);
+        PendingTransfer transfer2 = new PendingTransfer(publicKey2, publicKey, 5, null, 0,0, 0);
         ArrayList<PendingTransfer> transfers = new ArrayList<>();
         transfers.add(transfer2);
         transfers.add(transfer);
@@ -286,6 +286,8 @@ public class ClientTest {
         byte [] hash = Register.proofOfWork(jsonObject,difficulty);
         assertTrue(Register.matchesDifficulty(hash, difficulty));
     }
+
+
 
 
 

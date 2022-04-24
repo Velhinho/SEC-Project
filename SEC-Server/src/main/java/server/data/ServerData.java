@@ -105,6 +105,7 @@ public class ServerData {
                                    "source_key           TEXT    NOT NULL,\n" +
                                    "receiver_key           TEXT    NOT NULL,\n" +
                                    "amount            INT     NOT NULL,\n" +
+                                   "received            INT     NOT NULL,\n" +
                                    "sender_signature TEXT NOT NULL,\n" +
                                    "rid INTEGER  NOT NULL,\n" +
                                    "wts INTEGER NOT NULL);";
@@ -229,14 +230,15 @@ public class ServerData {
         }
         PreparedStatement pstmt = null;
         try{
-            String sql_insert = "INSERT INTO pending_transfers (source_key, receiver_key, amount, sender_signature, wts, rid) VALUES (?, ?, ?, ?, ?, ?);";
+            String sql_insert = "INSERT INTO pending_transfers (source_key, receiver_key, amount, received, sender_signature, wts, rid) VALUES (?, ?, ?, ?, ?, ?, ?);";
             pstmt = c.prepareStatement(sql_insert);
             pstmt.setString(1, sender);
             pstmt.setString(2, receiver);
             pstmt.setInt(3, amount);
-            pstmt.setString(4, signature);
-            pstmt.setLong(5, wts);
-            pstmt.setLong(6, rid);
+            pstmt.setInt(4, 0);
+            pstmt.setString(5, signature);
+            pstmt.setLong(6, wts);
+            pstmt.setLong(7, rid);
             pstmt.executeUpdate();
             pstmt.close();
 
@@ -336,7 +338,8 @@ public class ServerData {
                 String senderSignature = rs3.getString("sender_signature");
                 long wts = rs3.getLong("wts");
                 long rid = rs3.getLong("rid");
-                pendingTransfer = new PendingTransfer(source_key, receiver_key, amount, senderSignature, wts, rid);
+                int  received = rs3.getInt("received");
+                pendingTransfer = new PendingTransfer(source_key, receiver_key, amount, senderSignature, wts, rid, received);
                 account.addPendingTransfer(pendingTransfer);
             }
 
@@ -426,11 +429,12 @@ public class ServerData {
             pstmt1.executeUpdate();
             pstmt1.close();
 
-            sql_delete_transfers = "DELETE FROM pending_transfers WHERE source_key = ? AND receiver_key = ? AND wts = ? ;";
+            sql_delete_transfers = "UPDATE pending_transfers SET received = ? WHERE source_key = ? AND receiver_key = ? AND wts = ? ;";
             pstmt2 = c.prepareStatement(sql_delete_transfers);
-            pstmt2.setString(1, sender);
-            pstmt2.setString(2, receiver);
-            pstmt2.setLong(3, transfers_ts);
+            pstmt2.setInt(1, 1);
+            pstmt2.setString(2, sender);
+            pstmt2.setString(3, receiver);
+            pstmt2.setLong(4, transfers_ts);
             pstmt2.executeUpdate();
             pstmt2.close();
 

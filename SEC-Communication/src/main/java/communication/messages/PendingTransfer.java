@@ -6,10 +6,12 @@ import java.util.Objects;
 
 public final class PendingTransfer extends Transfer {
     private final String senderSignature;
+    private final int received;
 
-    public PendingTransfer(String sender, String receiver, int amount, String signature, long wts, long rid) {
+    public PendingTransfer(String sender, String receiver, int amount, String signature, long wts, long rid, int received) {
         super(sender,receiver,amount, wts, rid);
         this.senderSignature = signature;
+        this.received = received;
     }
 
     public String getSenderSignature() {
@@ -24,6 +26,10 @@ public final class PendingTransfer extends Transfer {
     @Override
     public int hashCode() {
         return super.hashCode();
+    }
+
+    public int getReceived() {
+        return received;
     }
 
     @Override

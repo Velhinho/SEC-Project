@@ -27,10 +27,17 @@ public class CheckResponse {
 
     @Override
     public String toString() {
-        return "{" +
-               "balance=" + balance +
-               ", transfers=" + transfers +
-               ", type='" + type + '\'' +
-               '}';
+        String beginning = "{" + "balance=" + balance + ",";
+        ArrayList<PendingTransfer> transfersNotReceived = transfers;
+        transfersNotReceived.removeIf(pendingTransfer -> pendingTransfer.getReceived() == 1);
+        StringBuilder transfers = new StringBuilder(beginning + "transfers=[");
+        for(int i = 0; i < transfersNotReceived.size(); i++){
+            transfers.append(transfersNotReceived.get(i).toString());
+            if (i != transfersNotReceived.size() - 1){
+                transfers.append(",");
+            }
+        }
+        transfers.append("]}");
+        return transfers.toString();
     }
 }
