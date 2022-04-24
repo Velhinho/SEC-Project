@@ -14,8 +14,11 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicLong;
-
+import java.util.stream.Collectors;
 
 
 public class Register {
@@ -123,7 +126,12 @@ public class Register {
         if(!checkReadIds(acks, readId)){
             throw new RuntimeException("Wrong ReadIds received");
         }
-        return acks.get(0).get("response").getAsString();
+        ArrayList<String> acksResponse = new ArrayList<>(acks.stream().map(d -> d.get("response").getAsString()).collect(Collectors.toList()));
+        var quorumResponses = getQuorumResponses(acksResponse);
+        if(quorumResponses.size() == 0){
+            throw new RuntimeException("Not enough ACKs");
+        }
+        return quorumResponses.get(0);
     }
 
     /**
@@ -529,5 +537,16 @@ public class Register {
 
     public String getPublicKey() {
         return publicKey;
+    }
+
+    public ArrayList<String> getQuorumResponses(ArrayList<String> responses){
+        ArrayList<String> validResponses = new ArrayList<>();
+        HashSet<String> responsesHashSet = new HashSet<>(responses);
+        for(String response: responsesHashSet){
+            if(hasQuorumSize(Collections.frequency(responses, response))){
+                validResponses.add(response);
+            }
+        }
+        return validResponses;
     }
 }
